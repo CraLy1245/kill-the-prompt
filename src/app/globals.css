@@ -1,0 +1,362 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f2f6f3;
+  color: #13201f;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+button:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(15, 118, 110, 0.22);
+  outline-offset: 2px;
+}
+
+@layer components {
+  .stepic-shell button,
+  .stepic-shell textarea {
+    appearance: none;
+  }
+
+  .stepic-workspace-panel {
+    border: 1px solid rgba(208, 224, 217, 0.94);
+    border-radius: 30px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(248, 252, 250, 0.9)),
+      #fff;
+    box-shadow: 0 24px 70px rgba(35, 67, 62, 0.1);
+  }
+
+  .stepic-rail,
+  .stepic-context-panel {
+    min-width: 0;
+    border: 1px solid rgba(208, 224, 217, 0.82);
+    border-radius: 26px;
+    background: rgba(255, 255, 255, 0.58);
+    padding: 16px;
+    box-shadow: 0 18px 52px rgba(35, 67, 62, 0.06);
+    backdrop-filter: blur(18px);
+  }
+
+  .stepic-context-panel {
+    display: none;
+  }
+
+  .stepic-step-link {
+    display: flex;
+    min-width: 0;
+    min-height: 48px;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid transparent;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.36);
+    padding: 8px;
+    color: #566c68;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+  }
+
+  .stepic-step-link:hover,
+  .stepic-step-link:focus-visible {
+    border-color: rgba(15, 118, 110, 0.22);
+    background: rgba(255, 255, 255, 0.82);
+    color: #13201f;
+    transform: translateY(-1px);
+  }
+
+  .stepic-step-link.active {
+    border-color: rgba(15, 118, 110, 0.34);
+    background: rgba(15, 118, 110, 0.1);
+    color: #0f766e;
+  }
+
+  .stepic-step-link.done {
+    color: #13201f;
+  }
+
+  .stepic-step-mark {
+    display: inline-grid;
+    height: 30px;
+    width: 30px;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 12px;
+    background: rgba(15, 118, 110, 0.1);
+    color: #0f766e;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .stepic-panel {
+    border: 1px solid rgba(208, 224, 217, 0.94);
+    border-radius: 28px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(249, 252, 250, 0.92)),
+      #fff;
+    box-shadow: 0 22px 56px rgba(35, 67, 62, 0.1);
+  }
+
+  .stepic-primary-button {
+    display: inline-flex;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 20px;
+    background: #0f766e;
+    padding: 0 18px;
+    color: white;
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1.1;
+    box-shadow: 0 14px 34px rgba(15, 118, 110, 0.2);
+    transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+  }
+
+  .stepic-primary-button:hover:not(:disabled),
+  .stepic-secondary-button:hover:not(:disabled),
+  .stepic-icon-button:hover:not(:disabled),
+  .stepic-select-button:hover:not(:disabled),
+  .stepic-carousel-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+
+  .stepic-primary-button:active:not(:disabled),
+  .stepic-secondary-button:active:not(:disabled),
+  .stepic-icon-button:active:not(:disabled),
+  .stepic-select-button:active:not(:disabled),
+  .stepic-option-card:active:not(:disabled),
+  .stepic-step-link:active:not(:disabled) {
+    transform: translateY(1px) scale(0.99);
+  }
+
+  .stepic-primary-button:disabled,
+  .stepic-secondary-button:disabled,
+  .stepic-select-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.42;
+  }
+
+  .stepic-secondary-button {
+    display: inline-flex;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid rgba(208, 224, 217, 0.94);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.86);
+    padding: 0 16px;
+    color: #13201f;
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1.1;
+    transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+  }
+
+  .stepic-icon-button {
+    display: inline-grid;
+    height: 44px;
+    width: 44px;
+    place-items: center;
+    border: 1px solid rgba(208, 224, 217, 0.94);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.82);
+    color: #0f766e;
+    transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+  }
+
+  .stepic-select-button {
+    display: inline-flex;
+    min-height: 52px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(15, 118, 110, 0.28);
+    border-radius: 20px;
+    background: rgba(15, 118, 110, 0.09);
+    padding: 0 18px;
+    color: #0f766e;
+    font-size: 15px;
+    font-weight: 900;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+
+  .stepic-carousel-button {
+    display: inline-grid;
+    min-height: 56px;
+    place-items: center;
+    border: 1px solid rgba(208, 224, 217, 0.94);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.72);
+    color: #0f766e;
+    transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+  }
+
+  .stepic-chip {
+    display: inline-flex;
+    min-height: 30px;
+    align-items: center;
+    border: 1px solid rgba(200, 216, 210, 0.94);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 0 12px;
+    color: #566c68;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .stepic-chip.soft {
+    border-color: transparent;
+    background: rgba(15, 118, 110, 0.1);
+    color: #0f766e;
+  }
+
+  .stepic-option-card {
+    display: block;
+    min-height: 108px;
+    border: 1px solid rgba(213, 226, 220, 0.94);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.78);
+    padding: 18px;
+    text-align: left;
+    transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .stepic-option-card:hover:not(:disabled) {
+    border-color: rgba(15, 118, 110, 0.28);
+    background: rgba(255, 255, 255, 0.94);
+    transform: translateY(-1px);
+  }
+
+  .stepic-option-card.active {
+    border-color: rgba(15, 118, 110, 0.42);
+    background: rgba(15, 118, 110, 0.08);
+    box-shadow: inset 6px 0 0 #0f766e;
+  }
+
+  .stepic-model-row {
+    display: flex;
+    min-height: 58px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border: 1px solid rgba(213, 226, 220, 0.94);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.78);
+    padding: 0 18px;
+    color: #13201f;
+    text-align: left;
+  }
+
+  .stepic-model-row.selected {
+    border-color: rgba(15, 118, 110, 0.42);
+    background: rgba(15, 118, 110, 0.08);
+    color: #0f766e;
+  }
+
+  .stepic-direction-card {
+    min-width: 0;
+    border: 1px solid rgba(213, 226, 220, 0.94);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.78);
+    padding: 20px;
+    box-shadow: 0 12px 34px rgba(35, 67, 62, 0.05);
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .stepic-direction-card:hover {
+    border-color: rgba(15, 118, 110, 0.26);
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-2px);
+  }
+
+  .stepic-direction-card.previewed {
+    border-color: rgba(15, 118, 110, 0.3);
+  }
+
+  .stepic-direction-card.selected {
+    border-color: rgba(15, 118, 110, 0.5);
+    background: rgba(15, 118, 110, 0.07);
+    box-shadow: 0 18px 48px rgba(15, 118, 110, 0.12);
+  }
+
+  .stepic-state-badge {
+    display: inline-flex;
+    min-height: 26px;
+    align-items: center;
+    border-radius: 11px;
+    background: rgba(86, 108, 104, 0.08);
+    padding: 0 9px;
+    color: #566c68;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .stepic-state-badge.selected {
+    background: rgba(15, 118, 110, 0.12);
+    color: #0f766e;
+  }
+
+  .stepic-preview-stage {
+    display: grid;
+    min-height: 0;
+    place-items: center;
+    border: 1px solid rgba(208, 224, 217, 0.94);
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at 50% 20%, rgba(15, 118, 110, 0.08), transparent 38%),
+      rgba(255, 255, 255, 0.72);
+    padding: 18px;
+  }
+
+  .stepic-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(15, 118, 110, 0.28) transparent;
+  }
+}
+
+@media (min-width: 1280px) {
+  .stepic-context-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+}
+
+@media (max-width: 768px) {
+  .stepic-carousel-button {
+    min-height: 48px;
+  }
+
+  .stepic-rail {
+    border-radius: 22px;
+    padding: 10px;
+  }
+
+  .stepic-step-link {
+    justify-content: center;
+    min-height: 42px;
+    padding: 6px;
+  }
+
+  .stepic-step-mark {
+    height: 28px;
+    width: 28px;
+  }
+}
