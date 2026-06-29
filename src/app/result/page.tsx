@@ -113,7 +113,9 @@ export default function ResultPage() {
                 </div>
                 <div className="stepic-preview-stage min-h-0 flex-1">
                   {store.imageUrl ? (
-                    <img src={store.imageUrl} alt="生成的 Logo 图片" className="max-h-full max-w-full rounded-[24px] object-contain shadow-[0_24px_70px_rgba(35,67,62,0.12)]" />
+                    <div className="stepic-preview-image-frame">
+                      <img src={store.imageUrl} alt="生成的 Logo 图片" className="stepic-preview-image" />
+                    </div>
                   ) : (
                     <div className="grid aspect-square w-[min(100%,560px)] place-items-center rounded-[30px] border border-dashed border-line bg-white/74 p-8 text-center">
                       <div>

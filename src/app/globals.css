@@ -316,6 +316,7 @@ textarea:focus-visible {
   .stepic-preview-stage {
     display: grid;
     min-height: 0;
+    overflow: hidden;
     place-items: center;
     border: 1px solid rgba(208, 224, 217, 0.94);
     border-radius: 28px;
@@ -323,6 +324,24 @@ textarea:focus-visible {
       radial-gradient(circle at 50% 20%, rgba(15, 118, 110, 0.08), transparent 38%),
       rgba(255, 255, 255, 0.72);
     padding: 18px;
+  }
+
+  .stepic-preview-image-frame {
+    position: relative;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 24px;
+    box-shadow: 0 24px 70px rgba(35, 67, 62, 0.12);
+  }
+
+  .stepic-preview-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
 
   .stepic-scroll {

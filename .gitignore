@@ -6,6 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 next-dev.log
 next-dev.err.log
+next-dev-*.log
 dev-server*.log
 *.tsbuildinfo
 tsconfig.tsbuildinfo
