@@ -10,7 +10,7 @@ export function StepNav({ current }: { current: number }) {
   const currentStep = steps[current] ?? steps[0];
 
   return (
-    <nav className="mx-auto mb-4 w-full rounded-[22px] border border-[#141823]/10 bg-white/70 px-4 py-3 text-sm text-muted shadow-[0_10px_40px_rgba(24,33,66,0.055)] backdrop-blur-xl" aria-label="流程进度">
+    <nav className="mx-auto mb-4 w-full rounded-[22px] border border-[#141823]/10 bg-white/70 px-4 py-3 text-sm text-muted backdrop-blur-xl" aria-label="流程进度">
       <div className="flex items-center justify-between gap-4 sm:hidden">
         <div>
           <div className="text-xs font-semibold text-accent">
@@ -33,7 +33,7 @@ export function StepNav({ current }: { current: number }) {
           const indicatorClass = [
             "flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border text-sm font-semibold transition",
             active
-              ? "border-transparent bg-accent text-white shadow-[0_10px_24px_rgba(0,59,115,0.18)]"
+              ? "border-transparent bg-accent text-white"
               : done
                 ? "border-accent/20 bg-accentSoft text-accent"
                 : "border-[#141823]/10 bg-white/70",
@@ -52,7 +52,7 @@ export function StepNav({ current }: { current: number }) {
                   className="group flex items-center gap-2 rounded-2xl transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                   aria-label={`返回「${step}」`}
                 >
-                  <span className={`${indicatorClass} group-hover:-translate-y-0.5`}>
+                  <span className={indicatorClass}>
                     <Check size={16} />
                   </span>
                   <span className={`${labelClass} group-hover:text-ink`}>{step}</span>

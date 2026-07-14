@@ -17,6 +17,7 @@ import type {
 import { clearFlowState, DEFAULT_MODEL_CONFIG, loadFlowState, loadModelConfig, saveFlowState, saveModelConfig } from "@/lib/storage";
 
 type FlowPatch = Partial<LogoFlowState>;
+export type DirectionEditablePatch = Pick<DesignDirection, "elements" | "colors" | "fonts" | "composition" | "reason">;
 
 type LogoFlowActions = {
   hydrate: () => void;
@@ -27,6 +28,7 @@ type LogoFlowActions = {
   setAnalyzeResult: (result: AnalyzeLogoResponse) => void;
   replaceDirections: (result: AnalyzeLogoResponse) => void;
   selectDirection: (direction: DesignDirection, index?: number) => void;
+  updateSelectedDirection: (patch: DirectionEditablePatch) => void;
   setDirectionIndex: (index: number) => void;
   setDetailsResult: (result: GenerateDetailsResponse) => void;
   setDetailIndex: (index: number) => void;
@@ -138,6 +140,18 @@ export const useLogoFlowStore = create<LogoFlowState & LogoFlowActions>((set, ge
     set({
       selectedDirection: direction,
       directionIndex,
+      ...clearAfterDirection(),
+      errorMessage: null,
+    });
+    persist(get());
+  },
+  updateSelectedDirection: (patch) => {
+    const selected = get().selectedDirection;
+    if (!selected) return;
+    const updated = { ...selected, ...patch };
+    set({
+      selectedDirection: updated,
+      directions: get().directions.map((direction) => (direction.id === updated.id ? updated : direction)),
       ...clearAfterDirection(),
       errorMessage: null,
     });

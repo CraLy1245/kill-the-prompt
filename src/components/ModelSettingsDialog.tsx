@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLogoFlowStore } from "@/store/useLogoFlowStore";
@@ -15,7 +15,7 @@ const FALLBACK_MODELS: ModelsResponse = {
   },
 };
 
-export function ModelSettingsButton() {
+export function ModelSettingsButton({ variant = "default" }: { variant?: "default" | "home" }) {
   const modelConfig = useLogoFlowStore((state) => state.modelConfig);
   const setModelConfig = useLogoFlowStore((state) => state.setModelConfig);
   const [isOpen, setOpen] = useState(false);
@@ -53,13 +53,12 @@ export function ModelSettingsButton() {
   return (
     <>
       <button
-        className="inline-flex min-h-10 items-center gap-2 rounded-full border border-[#141823]/10 bg-white/65 px-3 text-sm text-muted transition hover:border-accent/30 hover:bg-white hover:text-ink"
+        className={variant === "home" ? "inline-flex min-h-10 items-center rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900" : "inline-flex min-h-10 items-center rounded-full border border-[#141823]/10 bg-white/65 px-3 text-sm text-muted transition hover:border-accent/30 hover:bg-white hover:text-ink"}
         type="button"
         onClick={() => setOpen(true)}
         aria-label="打开模型配置"
       >
-        <Settings size={16} />
-        <span className="hidden sm:inline">模型配置</span>
+        <span>模型配置</span>
       </button>
       {isOpen && canPortal
         ? createPortal(

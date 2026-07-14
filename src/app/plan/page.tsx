@@ -1,6 +1,5 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
@@ -25,21 +24,18 @@ export default function PlanPage() {
         ) : (
           <>
             <PlanWorkspace plan={store.logoPlan} prompt={currentPrompt} promptTab={promptTab} setPromptTab={setPromptTab} />
-            <div className="stepic-panel flex min-h-[74px] shrink-0 items-center justify-between gap-4 px-5 py-3">
-              <div className="flex min-w-0 items-center gap-3">
-                <Link href="/details" className="stepic-secondary-button min-h-11">
-                  <ArrowLeft size={17} />
+            <div className="stepic-panel flex min-h-[74px] shrink-0 items-center justify-end px-5 py-3">
+              <div className="stepic-footer-actions">
+                <Link href="/details" className="stepic-secondary-button stepic-footer-action">
                   返回修改细节
                 </Link>
-                <Link href="/directions" className="stepic-secondary-button min-h-11">
-                  <RotateCcw size={17} />
+                <Link href="/directions" className="stepic-secondary-button stepic-footer-action">
                   重新选择方向
                 </Link>
+                <Link href="/result" className="stepic-primary-button stepic-footer-action">
+                  确认并生成 Logo
+                </Link>
               </div>
-              <Link href="/result" className="stepic-primary-button shrink-0">
-                确认并生成 Logo
-                <ArrowRight size={18} />
-              </Link>
             </div>
           </>
         )}

@@ -1,13 +1,15 @@
 "use client";
 
-import { ArrowRight, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { useLogoFlowStore } from "@/store/useLogoFlowStore";
 import type { AnalyzeLogoResponse } from "@/types/logo";
 
-const suggestions = ["极简科技品牌 Logo", "东方美学茶饮品牌", "适合 App 图标的方案", "高级感工作室标识", "运动潮牌视觉符号"];
+const suggestionRows = [
+  ["极简科技品牌 Logo", "东方美学茶饮品牌", "适合 App 图标的方案", "高级感工作室标识", "运动潮牌视觉符号"],
+];
 
 export default function HomePage() {
   const router = useRouter();
@@ -20,7 +22,6 @@ export default function HomePage() {
   const setLoading = useLogoFlowStore((state) => state.setLoading);
   const setError = useLogoFlowStore((state) => state.setError);
   const [value, setValue] = useState(rawInput);
-  const [isFocused, setIsFocused] = useState(false);
   const disabled = !value.trim() || isLoading;
 
   async function submit(nextValue: string) {
@@ -31,10 +32,7 @@ export default function HomePage() {
       const response = await fetch("/api/analyze-logo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          rawInput: nextValue,
-          providerConfig: modelConfig.analysis,
-        }),
+        body: JSON.stringify({ rawInput: nextValue, providerConfig: modelConfig.analysis }),
       });
       const result = (await response.json()) as AnalyzeLogoResponse & { error?: string };
       if (!response.ok) throw new Error(result.error || "request failed");
@@ -49,94 +47,277 @@ export default function HomePage() {
 
   return (
     <AppShell variant="home">
-      <section className="grid w-full -translate-y-[2vh] justify-items-center gap-5 text-center">
-        <h1 className="max-w-4xl text-[clamp(34px,5vw,58px)] font-bold leading-[1.08] tracking-normal">
-          模糊的想法，<span className="text-[#003b73]">也能促成专业的设计</span>
-        </h1>
-        <p className="mx-auto max-w-xl text-[15px] leading-7 text-[#626b7f] md:text-[17px]">
-          输入品牌信息和风格偏好，快速获得设计方向与 Logo 方案。
-        </p>
+      <div className="relative h-[calc(100dvh-58px)] min-h-0 overflow-hidden bg-paper px-8 text-ink selection:bg-accentSoft selection:text-accent">
+        <div className="pointer-events-none absolute -left-[10%] -top-[12%] h-[54%] w-[42%] rounded-full bg-[#cfe6df]/45 blur-[120px]" />
+        <div className="pointer-events-none absolute -bottom-[18%] -right-[10%] h-[42%] w-[32%] rounded-full bg-[#d9ece6]/35 blur-[110px]" />
 
-        <form
-          className={[
-            "mt-2 w-[min(100%,880px)] rounded-[30px] p-px shadow-[0_18px_60px_rgba(24,33,66,0.08)] transition",
-            isFocused ? "bg-[#003b73] shadow-[0_18px_70px_rgba(0,59,115,0.18)]" : "bg-[#141823]/10",
-          ].join(" ")}
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!disabled) submit(value.trim());
-          }}
-        >
-          <div className="relative min-h-36 overflow-hidden rounded-[29px] border border-white/70 bg-white/90 backdrop-blur-xl">
-            <label className="sr-only" htmlFor="logo-input">
-              请输入 Logo 需求
-            </label>
+        <section className="relative z-10 mx-auto flex h-full max-w-[1240px] -translate-y-1 flex-col items-center justify-center">
+          <div className="mb-7 max-w-[1280px] text-center">
+            <h1 className="max-w-[1100px] text-[clamp(38px,3.4vw,72px)] font-extrabold leading-[1.08] tracking-[-0.045em] md:whitespace-nowrap">
+              模糊的想法，<span className="text-accent">也能促成专业的设计</span>
+            </h1>
+            <p className="mx-auto mt-7 max-w-[720px] text-[20px] font-medium leading-[1.55] tracking-[-0.02em] text-muted">
+              输入您的品牌信息与风格偏好，AI 引擎将为您快速探索视觉方向，
+              <br />
+              生成高品质 Logo 方案。
+            </p>
+          </div>
+
+          <form
+            className="stepic-prompt-shell relative w-full max-w-[1110px] overflow-hidden rounded-[24px] bg-white/95 shadow-[0_18px_50px_rgba(35,67,62,0.1)]"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!disabled) void submit(value.trim());
+            }}
+          >
+            <label className="sr-only" htmlFor="logo-input">描述您的品牌需求</label>
             <textarea
               id="logo-input"
               value={value}
               onChange={(event) => setValue(event.target.value)}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && !event.shiftKey) {
                   event.preventDefault();
-                  if (!disabled) submit(value.trim());
+                  if (!disabled) void submit(value.trim());
                 }
               }}
-              placeholder="例如：科技品牌，简洁可靠，适合 App 图标……"
-              className="block min-h-36 w-full resize-none border-0 bg-transparent px-6 pb-16 pt-6 text-[17px] leading-7 text-[#141823] outline-none placeholder:text-[#9aa2b3]"
+              placeholder="描述您的品牌，例如：一家主打极简风格的高级感独立咖啡工作室..."
+              className="relative z-10 block min-h-[100px] w-full resize-none bg-transparent px-6 py-5 text-[17px] leading-7 text-slate-800 outline-none placeholder:text-slate-400"
             />
-            <div className="absolute bottom-4 left-5 right-4 flex items-center justify-between gap-4">
-              <span
-                className={[
-                  "min-w-0 truncate text-xs text-[#8b94a7] transition md:text-[13px]",
-                  isFocused || value ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
-                ].join(" ")}
-              >
-                Enter 发送 / Shift + Enter 换行
-              </span>
+            <div className="relative z-10 flex min-h-[44px] items-center justify-between bg-[#f5f8f6] px-6 py-1">
+              <div className="flex items-center gap-1 text-[13px] font-medium text-muted">
+                <span>按</span>
+                <kbd className="rounded border border-line bg-[#eef5f2] px-2 py-1 font-mono text-[11px]">Enter</kbd>
+                <span>发送，</span>
+                <kbd className="rounded border border-line bg-[#eef5f2] px-2 py-1 font-mono text-[11px]">Shift + Enter</kbd>
+                <span>换行</span>
+              </div>
               <button
                 type="submit"
                 disabled={disabled}
-                className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#003b73] text-white shadow-[0_12px_26px_rgba(0,59,115,0.24)] transition hover:-translate-y-0.5 hover:bg-[#002f5c] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
-                aria-label="提交 Logo 需求"
+                className={`flex items-center gap-2 rounded-full px-7 py-2 text-[16px] font-semibold leading-5 ${value.trim() ? "bg-accent text-white shadow-sm" : "cursor-not-allowed bg-[#eaf1ee] text-[#9aa8a4]"}`}
               >
-                {isLoading ? <Loader2 size={20} className="animate-spin" /> : <ArrowRight size={21} />}
+                生成提案
               </button>
             </div>
-          </div>
-        </form>
+          </form>
 
-        <div className="flex w-[min(100%,880px)] flex-wrap justify-center gap-2.5 pt-1" aria-label="快捷建议">
-          {suggestions.map((suggestion) => (
-            <button
-              key={suggestion}
-              className="min-h-11 rounded-full border border-[#141823]/10 bg-white/70 px-4 text-sm text-[#626b7f] shadow-[0_8px_30px_rgba(24,33,66,0.045)] transition hover:-translate-y-0.5 hover:border-[#003b73]/30 hover:bg-white hover:text-[#141823]"
-              type="button"
-              onClick={() => {
-                setValue(suggestion);
+          <div className="mt-7 w-full max-w-[920px]" aria-label="快捷建议">
+            <p className="mb-3 text-center text-[15px] font-medium text-muted">或者尝试这些预设方向：</p>
+            <SuggestionGrid
+              rows={suggestionRows}
+              onChoose={(text) => {
+                setValue(text);
                 window.requestAnimationFrame(() => document.getElementById("logo-input")?.focus());
               }}
+            />
+          </div>
+
+          <div className="min-h-10 pt-3" aria-live="polite">
+            {isLoading ? <div className="flex items-center justify-center gap-3 text-sm text-muted"><Loader2 className="h-4 w-4 animate-spin text-accent" />正在解析需求并生成设计方向...</div> : null}
+            {errorMessage ? <div className="mx-auto max-w-xl rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{errorMessage}</div> : null}
+          </div>
+        </section>
+      </div>
+    </AppShell>
+  );
+}
+
+function SuggestionGrid({ rows, onChoose }: { rows: string[][]; onChoose: (value: string) => void }) {
+  return (
+    <div className="stepic-suggestion-grid">
+      {rows.map((row, rowIndex) => (
+        <div key={`suggestions-${rowIndex}`} className="stepic-suggestion-row">
+          {row.map((text) => (
+            <button
+              key={text}
+              type="button"
+              onClick={() => onChoose(text)}
+              className="stepic-suggestion-pill"
             >
-              {suggestion}
+              {text}
             </button>
           ))}
         </div>
+      ))}
+    </div>
+  );
+}
 
-        <div className="min-h-12 w-[min(100%,880px)]" aria-live="polite">
-          {isLoading ? (
-            <div className="mx-auto flex max-w-xl items-center justify-center gap-3 rounded-2xl border border-[#141823]/10 bg-white/75 px-4 py-3 text-sm text-[#626b7f] shadow-[0_10px_40px_rgba(24,33,66,0.055)]">
-              <Loader2 size={18} className="animate-spin text-[#003b73]" />
-              正在解析需求并生成设计方向...
-            </div>
-          ) : null}
-          {errorMessage ? (
-            <div className="mx-auto max-w-xl rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-[0_10px_40px_rgba(24,33,66,0.055)]">
-              {errorMessage}
-            </div>
-          ) : null}
-        </div>
-      </section>
-    </AppShell>
+type LiquidTarget = { activeIndex: number; height: number; id: number; left: number; top: number; width: number };
+type LiquidPointer = { x: number; y: number };
+
+function getLiquidRowClass(rowIndex: number) {
+  return `stepic-liquid-row stepic-liquid-row--${rowIndex + 1}`;
+}
+
+function LiquidSuggestionRail({ rows, onChoose }: { rows: string[][]; onChoose: (value: string) => void }) {
+  const railRef = useRef<HTMLDivElement>(null);
+  const [target, setTarget] = useState<LiquidTarget | null>(null);
+  const [origin, setOrigin] = useState<LiquidTarget | null>(null);
+  const [pointer, setPointer] = useState<LiquidPointer | null>(null);
+  const rowOffsets = rows.map((_, rowIndex) => rows.slice(0, rowIndex).reduce((total, row) => total + row.length, 0));
+
+  function moveLiquid(event: { currentTarget: HTMLButtonElement }, activeIndex: number) {
+    const railBounds = railRef.current?.getBoundingClientRect();
+    const buttonBounds = event.currentTarget.getBoundingClientRect();
+    if (!railBounds) return;
+    const nextLeft = buttonBounds.left - railBounds.left;
+    const nextTarget = {
+      activeIndex,
+      height: buttonBounds.height,
+      id: Date.now(),
+      left: nextLeft,
+      top: buttonBounds.top - railBounds.top,
+      width: buttonBounds.width,
+    };
+    if (target && target.activeIndex !== activeIndex) setOrigin({ ...target, id: Date.now() });
+    setTarget(nextTarget);
+    setPointer({ x: nextLeft + buttonBounds.width / 2, y: nextTarget.top + buttonBounds.height / 2 });
+  }
+
+  function trackLiquidPointer(event: { clientX: number; clientY: number }) {
+    const rail = railRef.current;
+    if (!rail || !target) return;
+    const railBounds = rail.getBoundingClientRect();
+    const y = event.clientY - railBounds.top;
+    const isInsideCapsuleBand = Array.from(rail.querySelectorAll<HTMLButtonElement>("button")).some((button) => {
+      const bounds = button.getBoundingClientRect();
+      return event.clientY >= bounds.top && event.clientY <= bounds.bottom;
+    });
+    if (!isInsideCapsuleBand) {
+      setPointer(null);
+      return;
+    }
+    setPointer({ x: event.clientX - railBounds.left, y });
+  }
+
+  const liquidStyle = {
+    height: target ? `${target.height}px` : "0px",
+    left: target ? `${target.left}px` : "0px",
+    top: target ? `${target.top}px` : "0px",
+    width: target ? `${target.width}px` : "0px",
+  };
+  const originStyle = {
+    height: origin ? `${origin.height}px` : "0px",
+    left: origin ? `${origin.left}px` : "0px",
+    top: origin ? `${origin.top}px` : "0px",
+    width: origin ? `${origin.width}px` : "0px",
+  };
+  const pointerStyle = {
+    height: "28px",
+    left: pointer ? `${pointer.x - 14}px` : "0px",
+    top: pointer ? `${pointer.y - 14}px` : "0px",
+    width: "28px",
+  };
+
+  return (
+    <div
+      ref={railRef}
+      className="stepic-liquid-rail"
+      onPointerMove={trackLiquidPointer}
+      onPointerLeave={() => {
+        setTarget(null);
+        setOrigin(null);
+        setPointer(null);
+      }}
+    >
+      <svg className="absolute h-0 w-0" aria-hidden="true">
+        <defs>
+          <filter id="stepic-suggestion-goo" x="-40%" y="-60%" width="180%" height="220%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blur" />
+            <feColorMatrix
+              in="blur"
+              mode="matrix"
+              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7"
+              result="goo"
+            />
+            <feBlend in="SourceGraphic" in2="goo" />
+          </filter>
+          <filter id="stepic-pill-body-goo" x="-12%" y="-35%" width="124%" height="170%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="4.5" result="bodyBlur" />
+            <feColorMatrix
+              in="bodyBlur"
+              mode="matrix"
+              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8"
+              result="bodyGoo"
+            />
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.012 0.045"
+              numOctaves="2"
+              seed="8"
+              result="bodyNoise"
+            >
+              <animate
+                attributeName="baseFrequency"
+                dur="9s"
+                values="0.012 0.045;0.018 0.065;0.012 0.045"
+                repeatCount="indefinite"
+              />
+            </feTurbulence>
+            <feDisplacementMap
+              in="bodyGoo"
+              in2="bodyNoise"
+              scale="4.5"
+              xChannelSelector="R"
+              yChannelSelector="G"
+            />
+          </filter>
+        </defs>
+      </svg>
+      <div className="stepic-liquid-body-layer" aria-hidden="true">
+        {rows.map((row, rowIndex) => (
+          <div key={`body-${rowIndex}`} className={getLiquidRowClass(rowIndex)}>
+            {row.map((text, itemIndex) => {
+              const flatIndex = rowOffsets[rowIndex] + itemIndex;
+              return (
+                <span
+                  key={text}
+                  className={target?.activeIndex === flatIndex
+                    ? "stepic-liquid-body is-active"
+                    : "stepic-liquid-body"}
+                >
+                  {text}
+                </span>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      <div className={target ? "stepic-liquid-layer is-visible" : "stepic-liquid-layer"} aria-hidden="true">
+        {origin ? <span key={origin.id} className="stepic-metaball origin" style={originStyle} /> : null}
+        <span className="stepic-metaball pool" style={liquidStyle} />
+        {pointer ? (
+          <>
+            <span className="stepic-metaball droplet lag" style={pointerStyle} />
+            <span className="stepic-metaball droplet cursor" style={pointerStyle} />
+          </>
+        ) : null}
+      </div>
+      <div className="stepic-liquid-hit-layer">
+        {rows.map((row, rowIndex) => (
+          <div key={`controls-${rowIndex}`} className={getLiquidRowClass(rowIndex)}>
+            {row.map((text, itemIndex) => {
+              const flatIndex = rowOffsets[rowIndex] + itemIndex;
+              return (
+                <button
+                  key={text}
+                  type="button"
+                  onPointerEnter={(event) => moveLiquid(event, flatIndex)}
+                  onFocus={(event) => moveLiquid(event, flatIndex)}
+                  onClick={() => onChoose(text)}
+                  className={target?.activeIndex === flatIndex
+                    ? "stepic-liquid-pill text-accent"
+                    : "stepic-liquid-pill text-muted"}
+                >
+                  <span>{text}</span>
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

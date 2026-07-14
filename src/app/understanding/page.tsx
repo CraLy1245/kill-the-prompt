@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowRight, Check, ChevronRight, RotateCcw, X } from "lucide-react";
+import { Check } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { StepNav } from "@/components/StepNav";
@@ -164,16 +164,6 @@ export default function UnderstandingPage() {
               </div>
             )}
 
-            <div className="mt-auto grid gap-3 pt-5">
-              <Link href="/" className="stepic-secondary-button">
-                <RotateCcw size={17} />
-                返回修改输入
-              </Link>
-              <button type="button" onClick={continueToDirections} disabled={!canContinue} className="stepic-primary-button">
-                确认并选择方向
-                <ArrowRight size={18} />
-              </button>
-            </div>
           </aside>
 
           <section className="stepic-panel flex min-h-0 flex-col p-5">
@@ -182,10 +172,9 @@ export default function UnderstandingPage() {
                 <p className="text-xs font-bold uppercase tracking-[0.12em] text-accent">Review Fields</p>
                 <h2 className="mt-1 text-2xl font-semibold">结构化字段</h2>
               </div>
-              <span className="rounded-full border border-line/80 bg-white/72 px-3 py-1 text-xs font-bold text-muted">点击字段后在右侧编辑</span>
             </div>
 
-            <div className="grid min-h-0 gap-2 overflow-y-auto pr-1 stepic-scroll">
+            <div className="grid min-h-0 gap-2 overflow-y-auto p-1 stepic-scroll">
               {fields.map((field) => {
                 const active = field.key === activeKey;
                 const text = readField(draft, field);
@@ -195,8 +184,10 @@ export default function UnderstandingPage() {
                     type="button"
                     onClick={() => setActiveKey(field.key)}
                     className={[
-                      "group grid min-h-[72px] grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-[20px] border px-4 py-3 text-left transition",
-                      active ? "border-accent/40 bg-accentSoft shadow-[inset_5px_0_0_#0f766e]" : "border-line/70 bg-white/62 hover:border-accent/25 hover:bg-white/85",
+                      "group grid min-h-[72px] grid-cols-1 items-center rounded-[20px] border px-4 py-3 text-left transition",
+                      active
+                        ? "border-accent/55 bg-white shadow-[inset_0_0_0_1px_rgba(15,118,110,0.2),0_10px_28px_rgba(15,118,110,0.1)]"
+                        : "border-line/70 bg-white/62 hover:border-accent/25 hover:bg-white/85",
                     ].join(" ")}
                   >
                     <span className="min-w-0">
@@ -207,9 +198,6 @@ export default function UnderstandingPage() {
                       <span className={text ? "mt-1 block truncate text-sm text-muted" : "mt-1 block text-sm text-[#9aa8a4]"}>
                         {text || "未识别，可补充"}
                       </span>
-                    </span>
-                    <span className={active ? "text-accent" : "text-muted group-hover:text-accent"}>
-                      <ChevronRight size={18} />
                     </span>
                   </button>
                 );
@@ -230,14 +218,19 @@ export default function UnderstandingPage() {
 
             <div className="mt-5 min-h-0 flex-1 overflow-y-auto pr-1 stepic-scroll">
               {activeField.kind === "list" ? (
-                <TagEditor values={listValue(draft, activeField.key)} onChange={updateList} />
+                <ListEditor key={activeField.key} values={listValue(draft, activeField.key)} onChange={updateList} />
               ) : (
                 <TextEditor value={readField(draft, activeField)} onChange={updateText} />
               )}
             </div>
 
-            <div className="mt-4 rounded-[20px] border border-line/70 bg-white/62 p-4 text-sm leading-6 text-muted">
-              {activeField.kind === "list" ? "输入内容后按 Enter 添加，也可以粘贴顿号、逗号、分号或换行分隔的多项内容。" : "这里是单值字段，留空会在保存时按默认规则处理。"}
+            <div className="mt-5 grid gap-3 border-t border-line/70 pt-5">
+              <Link href="/" className="stepic-secondary-button">
+                返回修改输入
+              </Link>
+              <button type="button" onClick={continueToDirections} disabled={!canContinue} className="stepic-primary-button">
+                确认并选择方向
+              </button>
             </div>
           </aside>
         </section>
@@ -262,62 +255,44 @@ function TextEditor({ value, onChange }: { value: string; onChange: (value: stri
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="min-h-12 rounded-[18px] border border-line bg-white px-4 text-[15px] font-semibold text-ink outline-none transition focus:border-accent focus:ring-4 focus:ring-accent/10"
+        className="stepic-edit-input min-h-12 rounded-[18px] border border-line bg-white px-4 text-[15px] font-semibold text-ink outline-none transition focus:border-accent"
       />
     </label>
   );
 }
 
-function TagEditor({ values, onChange }: { values: string[]; onChange: (value: string[]) => void }) {
-  const [input, setInput] = useState("");
+function ListEditor({ values, onChange }: { values: string[]; onChange: (value: string[]) => void }) {
+  const [input, setInput] = useState(values.join("、"));
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  function addItems(raw: string) {
-    const next = splitList(raw);
-    if (!next.length) return;
-    onChange([...values, ...next].filter((item, index, array) => array.indexOf(item) === index));
-    setInput("");
-  }
+  useLayoutEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
 
-  function removeItem(item: string) {
-    onChange(values.filter((value) => value !== item));
-  }
+    textarea.style.height = "auto";
+    const nextHeight = Math.min(Math.max(textarea.scrollHeight, 132), 340);
+    textarea.style.height = `${nextHeight}px`;
+    textarea.style.overflowY = textarea.scrollHeight > 340 ? "auto" : "hidden";
+  }, [input]);
 
   return (
-    <div className="grid gap-4">
+    <div>
       <label className="grid gap-2">
-        <span className="text-sm font-semibold text-muted">添加条目</span>
-        <input
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          onBlur={() => addItems(input)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              addItems(input);
-            }
-          }}
-          placeholder="输入后按 Enter"
-          className="min-h-12 rounded-[18px] border border-line bg-white px-4 text-[15px] font-semibold text-ink outline-none transition placeholder:text-[#9aa8a4] focus:border-accent focus:ring-4 focus:ring-accent/10"
-        />
+        <span className="text-sm font-semibold text-muted">自定义修改</span>
+        <div className="stepic-dynamic-field">
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(event) => {
+              const next = event.target.value;
+              setInput(next);
+              onChange(splitList(next).filter((item, index, array) => array.indexOf(item) === index));
+            }}
+            placeholder="输入内容，可用顿号、逗号、分号或换行分隔"
+            className="stepic-edit-textarea relative z-10 block min-h-[132px] max-h-[340px] w-full resize-none rounded-[21px] border-0 bg-transparent px-5 py-4 text-[15px] font-semibold leading-7 text-ink outline-none placeholder:text-[#9aa8a4]"
+          />
+        </div>
       </label>
-
-      <div className="flex flex-wrap gap-2">
-        {values.length ? (
-          values.map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => removeItem(item)}
-              className="inline-flex min-h-9 items-center gap-2 rounded-[16px] border border-accent/15 bg-accentSoft px-3 text-sm font-semibold text-accent transition hover:border-accent/35 hover:bg-white"
-            >
-              {item}
-              <X size={14} />
-            </button>
-          ))
-        ) : (
-          <div className="rounded-[18px] border border-dashed border-line bg-white/52 px-4 py-6 text-center text-sm text-muted">暂无条目</div>
-        )}
-      </div>
     </div>
   );
 }

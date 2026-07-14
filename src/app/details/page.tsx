@@ -1,6 +1,5 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
@@ -16,9 +15,11 @@ export default function DetailsPage() {
   const store = useLogoFlowStore();
   const totalModules = store.detailModules.length;
   const configuredModules = store.detailModules.filter((module) => (store.detailSelections[module.id]?.length ?? 0) > 0).length;
+  const remainingModules = Math.max(0, totalModules - configuredModules);
+  const canBuildPrompt = totalModules > 0 && remainingModules === 0;
 
   async function buildPrompt() {
-    if (!store.rawInput || !store.analysis || !store.selectedDirection) return;
+    if (!store.rawInput || !store.analysis || !store.selectedDirection || !canBuildPrompt) return;
     store.setLoading(true);
     store.setError(null);
     try {
@@ -61,21 +62,30 @@ export default function DetailsPage() {
               onUpdateOption={store.updateDetailOption}
             />
             <div className="stepic-panel flex min-h-[74px] shrink-0 items-center justify-between gap-4 px-5 py-3">
-              <div className="flex min-w-0 items-center gap-4">
-                <Link href="/directions" className="stepic-secondary-button min-h-11 shrink-0">
-                  返回方向页
-                </Link>
-                {store.isLoading ? <LoadingState label="正在整理 Logo 方案..." /> : <ErrorState message={store.errorMessage} />}
+              <div className="min-w-0">
+                <ErrorState message={store.errorMessage} />
                 {!store.isLoading && !store.errorMessage ? (
                   <p className="truncate text-sm text-muted">
-                    已配置 <span className="font-semibold text-ink">{configuredModules}</span> / {totalModules} 个模块
+                    {canBuildPrompt ? (
+                      <>已配置 <span className="font-semibold text-ink">{configuredModules}</span> / {totalModules} 个模块</>
+                    ) : (
+                      <>还需配置 <span className="font-semibold text-ink">{remainingModules}</span> 个模块</>
+                    )}
                   </p>
                 ) : null}
               </div>
-              <button type="button" onClick={buildPrompt} disabled={store.isLoading} className="stepic-primary-button shrink-0">
-                <Sparkles size={18} />
-                生成 Logo 方案
-              </button>
+              <div className="stepic-footer-actions">
+                <Link href="/directions" className="stepic-secondary-button stepic-footer-action">
+                  返回方向页
+                </Link>
+                {store.isLoading ? (
+                  <LoadingState label="正在整理 Logo 方案..." />
+                ) : (
+                  <button type="button" onClick={buildPrompt} disabled={!canBuildPrompt} className="stepic-primary-button stepic-footer-action">
+                    生成 Logo 方案
+                  </button>
+                )}
+              </div>
             </div>
           </>
         )}

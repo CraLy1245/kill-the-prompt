@@ -1,6 +1,5 @@
 "use client";
 
-import { Check, Edit3, MousePointer2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { DesignDirection, DetailModule, DetailModuleId, DetailOption, DetailSelections } from "@/types/logo";
 
@@ -36,8 +35,10 @@ function DetailModuleRail({
               aria-pressed={active}
               onClick={() => onActivate(module.id)}
               className={[
-                "grid min-h-[58px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[20px] border px-4 py-2 text-left text-sm transition hover:border-accent/35 hover:bg-white",
-                active ? "border-accent/45 bg-accentSoft shadow-[inset_5px_0_0_#0f766e]" : "border-line/70 bg-white/68",
+                "grid min-h-[58px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[20px] border px-4 py-2 text-left text-sm transition-[border-color,background-color,box-shadow] hover:border-accent/35 hover:bg-white",
+                active
+                  ? "border-accent/55 bg-white shadow-[inset_0_0_0_1px_rgba(15,118,110,0.2),0_10px_28px_rgba(15,118,110,0.1)]"
+                  : "border-line/70 bg-white/68",
               ].join(" ")}
             >
               <span className="min-w-0">
@@ -71,8 +72,10 @@ function OptionCard({
   return (
     <article
       className={[
-        "min-h-[124px] rounded-[22px] border bg-white/68 p-4 transition hover:border-accent/30 hover:bg-white",
-        selected ? "border-accent/45 shadow-[inset_5px_0_0_#0f766e]" : active ? "border-accent/35" : "border-line/70",
+        "min-h-[124px] rounded-[22px] border bg-white/68 p-4 transition-[border-color,background-color,box-shadow] duration-200 hover:border-accent/30 hover:bg-white",
+        selected
+          ? "border-accent/55 bg-white shadow-[inset_0_0_0_1px_rgba(15,118,110,0.2),0_10px_28px_rgba(15,118,110,0.1)]"
+          : active ? "border-accent/35" : "border-line/70",
       ].join(" ")}
     >
       <div className="flex items-start justify-between gap-3">
@@ -81,16 +84,16 @@ function OptionCard({
           <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">{option.description}</p>
         </button>
         <div className="flex shrink-0 items-center gap-2">
-          <button type="button" onClick={onInspect} className={active ? "stepic-icon-button bg-accentSoft" : "stepic-icon-button"} aria-label={`编辑 ${option.label}`}>
-            <Edit3 size={16} />
+          <button type="button" onClick={onInspect} className={active ? "rounded-full bg-accentSoft px-3 py-2 text-xs font-bold text-accent" : "rounded-full border border-line bg-white px-3 py-2 text-xs font-bold text-muted"} aria-label={`编辑 ${option.label}`}>
+            编辑
           </button>
           <button
             type="button"
             onClick={onToggle}
-            className={selected ? "grid h-10 w-10 place-items-center rounded-[16px] bg-accent text-white" : "grid h-10 w-10 place-items-center rounded-[16px] border border-line bg-white/75 text-muted"}
+            className={selected ? "rounded-full bg-accent px-3 py-2 text-xs font-bold text-white" : "rounded-full border border-line bg-white px-3 py-2 text-xs font-bold text-muted"}
             aria-label={selected ? `取消选择 ${option.label}` : `选择 ${option.label}`}
           >
-            {selected ? <Check size={17} /> : <MousePointer2 size={16} />}
+            {selected ? "已选" : "选择"}
           </button>
         </div>
       </div>
@@ -129,7 +132,10 @@ function CurrentDetailModulePanel({
             selected={selected.includes(option.id)}
             active={activeTarget.type === "option" && activeTarget.optionId === option.id}
             onInspect={() => onInspect({ type: "option", moduleId: module.id, optionId: option.id })}
-            onToggle={() => onToggle(module, option.id)}
+            onToggle={() => {
+              onInspect({ type: "option", moduleId: module.id, optionId: option.id });
+              onToggle(module, option.id);
+            }}
           />
         ))}
       </div>
@@ -142,7 +148,6 @@ function Inspector({
   modules,
   selections,
   target,
-  onInspect,
   onUpdateModule,
   onUpdateOption,
 }: {
@@ -150,7 +155,6 @@ function Inspector({
   modules: DetailModule[];
   selections: DetailSelections;
   target: InspectorTarget;
-  onInspect: (target: InspectorTarget) => void;
   onUpdateModule: (moduleId: DetailModuleId, patch: Partial<Pick<DetailModule, "title" | "description">>) => void;
   onUpdateOption: (moduleId: DetailModuleId, optionId: string, patch: { label?: string; description?: string }) => void;
 }) {
@@ -180,7 +184,7 @@ function Inspector({
                 <input
                   value={option.label}
                   onChange={(event) => onUpdateOption(module.id, option.id, { label: event.target.value })}
-                  className="min-h-11 rounded-[17px] border border-line bg-white px-3 text-sm font-semibold outline-none focus:border-accent focus:ring-4 focus:ring-accent/10"
+                  className="stepic-inspector-control min-h-11 rounded-[17px] border border-line bg-white px-3 text-sm font-semibold outline-none"
                 />
               </label>
               <label className="grid gap-2">
@@ -188,12 +192,9 @@ function Inspector({
                 <textarea
                   value={option.description}
                   onChange={(event) => onUpdateOption(module.id, option.id, { description: event.target.value })}
-                  className="min-h-[130px] resize-none rounded-[17px] border border-line bg-white px-3 py-3 text-sm leading-6 outline-none focus:border-accent focus:ring-4 focus:ring-accent/10"
+                  className="stepic-inspector-control min-h-[130px] resize-none rounded-[17px] border border-line bg-white px-3 py-3 text-sm leading-6 outline-none"
                 />
               </label>
-              <button type="button" onClick={() => onInspect({ type: "module", moduleId: module.id })} className="stepic-secondary-button min-h-11">
-                编辑模块信息
-              </button>
             </>
           ) : (
             <>
@@ -202,7 +203,7 @@ function Inspector({
                 <input
                   value={module.title}
                   onChange={(event) => onUpdateModule(module.id, { title: event.target.value })}
-                  className="min-h-11 rounded-[17px] border border-line bg-white px-3 text-sm font-semibold outline-none focus:border-accent focus:ring-4 focus:ring-accent/10"
+                  className="stepic-inspector-control min-h-11 rounded-[17px] border border-line bg-white px-3 text-sm font-semibold outline-none"
                 />
               </label>
               <label className="grid gap-2">
@@ -210,15 +211,11 @@ function Inspector({
                 <textarea
                   value={module.description}
                   onChange={(event) => onUpdateModule(module.id, { description: event.target.value })}
-                  className="min-h-[130px] resize-none rounded-[17px] border border-line bg-white px-3 py-3 text-sm leading-6 outline-none focus:border-accent focus:ring-4 focus:ring-accent/10"
+                  className="stepic-inspector-control min-h-[130px] resize-none rounded-[17px] border border-line bg-white px-3 py-3 text-sm leading-6 outline-none"
                 />
               </label>
             </>
           )}
-        </div>
-
-        <div className="mt-5 rounded-[20px] border border-line/70 bg-white/62 p-4 text-sm leading-6 text-muted">
-          修改模块或选项文案后，会保留当前选择，并清空已生成方案与图片。重新生成方案后会进入独立的方案确认页。
         </div>
       </div>
     </aside>
@@ -270,7 +267,6 @@ export function DetailsWorkspace({
         modules={modules}
         selections={selections}
         target={target}
-        onInspect={inspect}
         onUpdateModule={onUpdateModule}
         onUpdateOption={onUpdateOption}
       />
