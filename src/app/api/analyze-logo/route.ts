@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { callLogoAI } from "@/lib/aiClient";
-import { designDirectionSchema } from "@/lib/logoSchemas";
+import { designDirectionSchema, requirementAnalysisSchema } from "@/lib/logoSchemas";
 import type { AnalyzeLogoResponse } from "@/types/logo";
 
 const requestSchema = z.object({
@@ -11,6 +11,7 @@ const requestSchema = z.object({
     baseUrl: z.string().trim().optional(),
     model: z.string().trim().optional(),
   }).optional(),
+  confirmedAnalysis: requirementAnalysisSchema.optional(),
   previousDirections: z.array(designDirectionSchema).optional(),
   rawInput: z.string().trim().min(1),
   regenerationPrompt: z.string().trim().optional(),

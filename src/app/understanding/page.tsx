@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { StepNav } from "@/components/StepNav";
 import { useLogoFlowStore } from "@/store/useLogoFlowStore";
-import type { RequirementAnalysis } from "@/types/logo";
+import type { AnalyzeLogoResponse, RequirementAnalysis } from "@/types/logo";
 
 type FieldKey = keyof RequirementAnalysis;
 
@@ -97,7 +97,12 @@ export default function UnderstandingPage() {
   const rawInput = useLogoFlowStore((state) => state.rawInput);
   const analysis = useLogoFlowStore((state) => state.analysis);
   const directions = useLogoFlowStore((state) => state.directions);
-  const setAnalysis = useLogoFlowStore((state) => state.setAnalysis);
+  const modelConfig = useLogoFlowStore((state) => state.modelConfig);
+  const isLoading = useLogoFlowStore((state) => state.isLoading);
+  const errorMessage = useLogoFlowStore((state) => state.errorMessage);
+  const setAnalyzeResult = useLogoFlowStore((state) => state.setAnalyzeResult);
+  const setLoading = useLogoFlowStore((state) => state.setLoading);
+  const setError = useLogoFlowStore((state) => state.setError);
   const [draft, setDraft] = useState<RequirementAnalysis | null>(() => (analysis ? cloneAnalysis(analysis) : null));
   const [activeKey, setActiveKey] = useState<FieldKey>("brandType");
 
@@ -110,7 +115,7 @@ export default function UnderstandingPage() {
   const currentKey = draft ? analysisKey(draft) : "";
   const changed = !!draft && currentKey !== originalKey;
   const completedFields = draft ? fields.filter((field) => readField(draft, field)).length : 0;
-  const canContinue = !!draft?.brandType.trim() && directions.length > 0;
+  const canContinue = !!draft?.brandType.trim() && !isLoading && (changed || directions.length > 0);
 
   function updateText(value: string) {
     if (!draft) return;
@@ -122,10 +127,35 @@ export default function UnderstandingPage() {
     setDraft(setDraftField(draft, activeField, next));
   }
 
-  function continueToDirections() {
+  async function continueToDirections() {
     if (!draft || !canContinue) return;
-    if (changed) setAnalysis(normalizedAnalysis(draft));
-    router.push("/directions");
+    if (!changed) {
+      router.push("/directions");
+      return;
+    }
+
+    const confirmedAnalysis = normalizedAnalysis(draft);
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/analyze-logo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rawInput,
+          confirmedAnalysis,
+          providerConfig: modelConfig.analysis,
+        }),
+      });
+      const result = (await response.json()) as AnalyzeLogoResponse & { error?: string };
+      if (!response.ok) throw new Error(result.error || "重新生成方向失败，请重试。");
+      setAnalyzeResult({ ...result, analysis: confirmedAnalysis });
+      router.push("/directions");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "重新生成方向失败，请重试。");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -156,7 +186,7 @@ export default function UnderstandingPage() {
 
             {changed ? (
               <div className="mt-4 rounded-[20px] border border-[#d97706]/20 bg-amberSoft px-4 py-3 text-sm leading-6 text-[#8a580c]">
-                已修改理解内容。当前方向仍基于原始需求生成，如需重新生成方向请返回首页。
+                已修改理解内容。确认后将重新生成设计方向，并清除旧的细节、方案、Prompt 和图片。
               </div>
             ) : (
               <div className="mt-4 rounded-[20px] border border-accent/10 bg-accentSoft px-4 py-3 text-sm leading-6 text-accent">
@@ -225,11 +255,12 @@ export default function UnderstandingPage() {
             </div>
 
             <div className="mt-5 grid gap-3 border-t border-line/70 pt-5">
+              {errorMessage ? <div className="rounded-[16px] border border-red-200 bg-red-50 px-3 py-2 text-sm leading-6 text-red-700">{errorMessage}</div> : null}
               <Link href="/" className="stepic-secondary-button">
                 返回修改输入
               </Link>
               <button type="button" onClick={continueToDirections} disabled={!canContinue} className="stepic-primary-button">
-                确认并选择方向
+                {isLoading ? "正在重新生成..." : changed ? "重新生成并选择方向" : "确认并选择方向"}
               </button>
             </div>
           </aside>

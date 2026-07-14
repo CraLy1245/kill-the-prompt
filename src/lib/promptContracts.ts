@@ -11,16 +11,20 @@ const strictJsonRules = [
 
 export function buildTaskPrompt(task: LogoTask, input: unknown): string {
   if (task === "analyzeLogo") {
-    const { rawInput, regenerationPrompt, previousDirections } = input as {
+    const { confirmedAnalysis, rawInput, regenerationPrompt, previousDirections } = input as {
+      confirmedAnalysis?: RequirementAnalysis;
       previousDirections?: DesignDirection[];
       rawInput: string;
       regenerationPrompt?: string;
     };
     return [
       strictJsonRules,
-      "任务：读取用户原始 Logo 设计需求，完成需求解析，并输出 5 个互相区分、适合当前需求的设计方向。",
+      confirmedAnalysis
+        ? "任务：用户已经校准需求解析。必须以 confirmedAnalysis 为唯一有效的结构化需求，重新输出 5 个互相区分的设计方向。"
+        : "任务：读取用户原始 Logo 设计需求，完成需求解析，并输出 5 个互相区分、适合当前需求的设计方向。",
       "不允许输出具体 Logo Prompt，不允许进入细节选择阶段。",
       "directions 数量必须刚好为 5。",
+      confirmedAnalysis ? "输出中的 analysis 必须与 confirmedAnalysis 保持一致，不得恢复旧字段、删除用户修改或自行改写确认内容。" : "",
       previousDirections?.length
         ? "本次是重新生成设计方向。必须避开 previousDirections 中已有的标题、核心元素、构图和视觉关键词，生成明显不同的新方向。"
         : "",
@@ -55,6 +59,8 @@ export function buildTaskPrompt(task: LogoTask, input: unknown): string {
 }`,
       "用户原始需求：",
       rawInput,
+      confirmedAnalysis ? "用户确认后的结构化需求（confirmedAnalysis）：" : "",
+      confirmedAnalysis ? JSON.stringify(confirmedAnalysis, null, 2) : "",
       regenerationPrompt ? "用户补充灵感：" : "",
       regenerationPrompt ?? "",
       previousDirections?.length ? "previousDirections：" : "",

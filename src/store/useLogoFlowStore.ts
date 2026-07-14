@@ -123,6 +123,7 @@ export const useLogoFlowStore = create<LogoFlowState & LogoFlowActions>((set, ge
     set({
       analysis,
       analysisItems: buildAnalysisItems(analysis),
+      directions: [],
       selectedDirection: null,
       directionIndex: 0,
       ...clearAfterAnalysis(),
