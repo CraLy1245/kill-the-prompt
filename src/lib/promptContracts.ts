@@ -110,6 +110,9 @@ export function buildTaskPrompt(task: LogoTask, input: unknown): string {
     "任务：根据用户原始需求、需求解析结果、已选方向和已选细节，生成 Logo 方案确认卡与最终生图 Prompt。",
     "Prompt 必须与用户选择一致，不得混入未选择方向，不得新增冲突核心元素。",
     "如果用户未提供品牌名，Prompt 中只能使用“品牌名占位符”或“未定品牌名文字区域”，不得编造品牌名。",
+    "positivePrompt 必须明确要求单张 1:1 正方形画布、居中构图和充足安全边距。",
+    "positivePrompt 必须明确要求整张画面只有一个最终 Logo 组合：图形符号只出现一次，品牌名称最多出现一次。",
+    "negativePrompt 必须禁止重复标志、主标与缩略标并排、大小版本对比、Logo system sheet、展示板、网格、多版本、多变体和 mockup。",
     "logoPlan.designSummary 是展示给用户的 Logo 设计说明，只需用 80-140 个中文字符说明为什么采用该图形、色彩、字体和构图；不得写成生图 Prompt，不得堆叠镜头、材质、渲染、分辨率等提示词语言。",
     "输出 JSON 结构：",
     `{
