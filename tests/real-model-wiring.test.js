@@ -22,6 +22,16 @@ test("分析模型和执行模型使用独立的服务端配置", async () => {
   assert.equal(workspace.includes("API Key（仅本地使用）"), false);
 });
 
+test("设置页只要求 OpenAI-compatible 端点和 API Key", async () => {
+  const settings = await read("src/app/settings/page.tsx");
+  assert.match(settings, /调用端点/);
+  assert.match(settings, /API Key/);
+  assert.equal(settings.includes("模型 ID</span><input"), false);
+  const discovery = await read("src/core/model-providers/model-discovery.ts");
+  assert.match(discovery, /\/models/);
+  assert.match(discovery, /discoverOpenAIModels/);
+});
+
 test("真实模式没有固定模板降级并启用 Patch 路径白名单", async () => {
   const compilers = await read("src/core/compilers/index.ts");
   assert.match(compilers, /requestArtifact/);

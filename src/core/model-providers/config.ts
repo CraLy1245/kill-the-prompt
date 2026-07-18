@@ -1,5 +1,6 @@
 import "server-only";
 import type { ModelRole, PublicModelRoleStatus, ServerModelConfig } from "@/types/universal";
+import { readModelSettingsSync } from "@/core/model-providers/model-settings-store";
 
 const DEFAULT_TEXT_BASE_URL = "https://www.right.codes/codex/v1";
 const DEFAULT_IMAGE_BASE_URL = "https://www.right.codes/draw/v1";
@@ -14,31 +15,34 @@ function normalizeBaseUrl(value: string) {
 }
 
 export function getAnalysisModelConfig(): ServerModelConfig {
+  const stored = readModelSettingsSync().analysis;
   return {
     role: "analysis",
-    model: process.env.ANALYSIS_MODEL_ID ?? process.env.RIGHT_CODES_MODEL ?? "",
-    baseUrl: normalizeBaseUrl(process.env.ANALYSIS_MODEL_BASE_URL ?? process.env.RIGHT_CODES_BASE_URL ?? DEFAULT_TEXT_BASE_URL),
-    apiKey: process.env.ANALYSIS_MODEL_API_KEY ?? process.env.RIGHT_CODES_API_KEY ?? "",
+    model: stored?.textModel ?? process.env.ANALYSIS_MODEL_ID ?? process.env.RIGHT_CODES_MODEL ?? "",
+    baseUrl: normalizeBaseUrl(stored?.baseUrl ?? process.env.ANALYSIS_MODEL_BASE_URL ?? process.env.RIGHT_CODES_BASE_URL ?? DEFAULT_TEXT_BASE_URL),
+    apiKey: stored?.apiKey ?? process.env.ANALYSIS_MODEL_API_KEY ?? process.env.RIGHT_CODES_API_KEY ?? "",
     timeoutMs: positiveInteger(process.env.ANALYSIS_MODEL_TIMEOUT_MS, 90_000),
   };
 }
 
 export function getExecutionModelConfig(): ServerModelConfig {
+  const stored = readModelSettingsSync().execution;
   return {
     role: "execution",
-    model: process.env.EXECUTION_MODEL_ID ?? process.env.RIGHT_CODES_MODEL ?? "",
-    baseUrl: normalizeBaseUrl(process.env.EXECUTION_MODEL_BASE_URL ?? process.env.RIGHT_CODES_BASE_URL ?? DEFAULT_TEXT_BASE_URL),
-    apiKey: process.env.EXECUTION_MODEL_API_KEY ?? process.env.RIGHT_CODES_API_KEY ?? "",
+    model: stored?.textModel ?? process.env.EXECUTION_MODEL_ID ?? process.env.RIGHT_CODES_MODEL ?? "",
+    baseUrl: normalizeBaseUrl(stored?.baseUrl ?? process.env.EXECUTION_MODEL_BASE_URL ?? process.env.RIGHT_CODES_BASE_URL ?? DEFAULT_TEXT_BASE_URL),
+    apiKey: stored?.apiKey ?? process.env.EXECUTION_MODEL_API_KEY ?? process.env.RIGHT_CODES_API_KEY ?? "",
     timeoutMs: positiveInteger(process.env.EXECUTION_MODEL_TIMEOUT_MS, 150_000),
   };
 }
 
 export function getExecutionImageConfig(): ServerModelConfig {
+  const stored = readModelSettingsSync().execution;
   return {
     role: "execution",
-    model: process.env.EXECUTION_IMAGE_MODEL_ID ?? process.env.RIGHT_CODES_IMAGE_MODEL ?? "",
-    baseUrl: normalizeBaseUrl(process.env.EXECUTION_IMAGE_BASE_URL ?? process.env.RIGHT_CODES_IMAGE_BASE_URL ?? DEFAULT_IMAGE_BASE_URL),
-    apiKey: process.env.EXECUTION_IMAGE_API_KEY ?? process.env.RIGHT_CODES_IMAGE_API_KEY ?? "",
+    model: stored?.imageModel ?? process.env.EXECUTION_IMAGE_MODEL_ID ?? process.env.RIGHT_CODES_IMAGE_MODEL ?? "",
+    baseUrl: normalizeBaseUrl(stored?.baseUrl ?? process.env.EXECUTION_IMAGE_BASE_URL ?? process.env.RIGHT_CODES_IMAGE_BASE_URL ?? DEFAULT_IMAGE_BASE_URL),
+    apiKey: stored?.apiKey ?? process.env.EXECUTION_IMAGE_API_KEY ?? process.env.RIGHT_CODES_IMAGE_API_KEY ?? "",
     timeoutMs: positiveInteger(process.env.EXECUTION_IMAGE_TIMEOUT_MS, 180_000),
   };
 }

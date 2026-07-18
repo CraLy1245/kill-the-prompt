@@ -133,14 +133,16 @@ npm run typecheck
 npm run build
 ```
 
-复制 `.env.local.example` 为 `.env.local`，分别配置分析模型、文本执行模型和执行模型的图片驱动，然后打开 `http://localhost:3000`。通用工作流不会在模型缺失时静默回退到演示结果。
+启动后打开 `http://localhost:3000/settings`。分析模型和执行模型都只需填写 OpenAI-compatible 调用端点与 API Key；保存时应用会请求端点的 `GET /models`，自动选择文本模型，并为执行角色自动发现图片模型。端点既可以是 API 根地址，也可以是完整的 `/chat/completions` 或 `/responses` 地址。
+
+`.env.local.example` 仍保留为部署环境或高级配置的后备方式。设置页保存的本机配置优先于环境变量，通用工作流不会在模型缺失时静默回退到演示结果。
 
 模型职责只分为两个业务角色：
 
 - `analysis`：分析需求、生成方向与决策、构建 `ArtifactSpec`、解析修改 Patch。
 - `execution`：只消费已确认的 `ArtifactSpec`，生成文章、网页、PRD 或图片。图片通过 execution 角色下的图片 API 驱动调用。
 
-所有通用模型配置均由服务端环境变量读取。浏览器不接收或保存 API Key。
+设置页提交的 API Key 只会发送到本机服务端，并写入被 Git 忽略的 `.local-data/model-settings.json`；公开状态接口不会返回密钥。生产部署应使用受控的服务端密钥存储或环境变量，不应提交本机配置文件。
 
 ## 已完成
 
