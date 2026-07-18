@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { applyCanvasActions, createCanvasDocument } from "@/core/canvas";
+import { applyCanvasActions, createCanvasDocument, upgradeCanvasDocument } from "@/core/canvas";
 import { canvasActionSchema } from "@/core/schemas";
 import { fileStorage } from "@/core/storage/file-storage";
 
@@ -17,6 +17,10 @@ export async function GET(_: Request, { params }: Params) {
     if (!document) {
       document = createCanvasDocument(spec);
       await fileStorage.saveCanvasDocument(projectId, document, false);
+    } else {
+      const upgraded = upgradeCanvasDocument(document, spec);
+      document = upgraded.document;
+      if (upgraded.changed) await fileStorage.saveCanvasDocument(projectId, document, false);
     }
     return NextResponse.json({ document });
   } catch (error) {

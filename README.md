@@ -20,7 +20,7 @@
   → ArtifactSpec Patch 继续修改
 ```
 
-Prompt、系统指令、网页代码约束和文档结构都是内部编译结果。确认步骤以通用节点画布展示方案：用户可以拖拽、编辑、撤销，也可以用自然语言让分析模型自主插入、修改、移动、缩放或删除节点。执行模型会同时消费已确认的 `ArtifactSpec` 与画布语义，不再向用户暴露原始 JSON。
+Prompt、系统指令、网页代码约束和文档结构都是内部编译结果。确认步骤以自适应 GUI 画布展示方案：对象会成为字段组，数组会成为标签或可增删列表，决策值会使用创作包中的真实标签和下拉框。用户可以拖拽、编辑、撤销，也可以用自然语言让分析模型自主插入、修改、移动、缩放或删除节点。执行模型会同时消费已确认的 `ArtifactSpec` 与画布语义，页面和编辑器都不再向用户暴露原始 JSON、内部 ID 或枚举值。
 
 ## 支持的四类成果
 
@@ -61,7 +61,7 @@ Prompt、系统指令、网页代码约束和文档结构都是内部编译结�
 
 通用画布 API：
 
-- `GET /api/canvas/:projectId`：读取画布；首次访问时根据任意 `ArtifactSpec` 生成通用语义节点。
+- `GET /api/canvas/:projectId`：读取画布；首次访问时根据任意 `ArtifactSpec` 生成通用语义节点，并把旧版序列化文本节点无损升级为结构化 GUI 数据。
 - `PUT /api/canvas/:projectId`：按 revision 应用受 Schema 约束的 `CanvasAction[]`。
 - `DELETE /api/canvas/:projectId`：撤销到上一个持久化版本。
 - `POST /api/canvas/:projectId/edit`：让分析模型根据自然语言生成并执行画布动作。
@@ -159,6 +159,7 @@ npm run build
 - 五个内置创作包，包含 Logo 迁移包。
 - 本地项目目录存储、创作包注册/导入/导出 API、项目 API。
 - 统一首页和工作区：流程轨、动态方向、动态决策、ArtifactSpec 确认、成果预览、修改 Patch。
+- 通用 AI 画布：结构化 GUI 展示、业务字段编辑、决策下拉框、拖拽、撤销与自然语言 AI 编辑。
 - Markdown、PRD JSON、HTML/CSS 导出。
 - 安全 iframe 网页预览和有限菜单交互。
 - 原 Logo 页面/API 路由保留，旧项目不会因为初版迁移被整体删除。

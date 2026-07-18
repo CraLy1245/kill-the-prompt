@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { upgradeCanvasDocument } from "@/core/canvas";
 import { compilerList } from "@/core/compilers";
 import { executeArtifactWithModel, requestExecutionImage } from "@/core/model-providers/execution-model";
 import { getExecutionImageConfig, getExecutionModelConfig } from "@/core/model-providers/config";
@@ -21,7 +22,10 @@ export async function POST(request: Request) {
     if (!persistedSpec || persistedSpec.updatedAt !== spec.updatedAt) return NextResponse.json({ error: "方案版本已变化，请刷新后重新生成" }, { status: 409 });
     const compiler = compilerList.find((item) => item.artifactKind === spec.artifactKind);
     if (!compiler) return NextResponse.json({ error: "成果编译器未注册" }, { status: 500 });
-    const canvas = await fileStorage.getCanvasDocument(spec.projectId);
+    const storedCanvas = await fileStorage.getCanvasDocument(spec.projectId);
+    const canvasUpgrade = storedCanvas ? upgradeCanvasDocument(storedCanvas, spec) : null;
+    const canvas = canvasUpgrade?.document ?? null;
+    if (canvasUpgrade?.changed && canvas) await fileStorage.saveCanvasDocument(spec.projectId, canvas, false);
     const context: CompilerContext = {
       projectId: spec.projectId,
       now: new Date().toISOString(),

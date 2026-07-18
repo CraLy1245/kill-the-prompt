@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { applyCanvasActions, createCanvasDocument } from "@/core/canvas";
+import { applyCanvasActions, createCanvasDocument, upgradeCanvasDocument } from "@/core/canvas";
 import { editCanvasWithModel } from "@/core/model-providers/canvas-model";
 import { getAnalysisModelConfig } from "@/core/model-providers/config";
 import { withModelRun } from "@/core/model-providers/model-run";
@@ -20,6 +20,10 @@ export async function POST(request: Request, { params }: Params) {
     if (!current) {
       current = createCanvasDocument(spec);
       await fileStorage.saveCanvasDocument(projectId, current, false);
+    } else {
+      const upgraded = upgradeCanvasDocument(current, spec);
+      current = upgraded.document;
+      if (upgraded.changed) await fileStorage.saveCanvasDocument(projectId, current, false);
     }
     if (current.revision !== body.baseRevision) return NextResponse.json({ error: "画布版本已变化，请刷新后重试", document: current }, { status: 409 });
     const config = getAnalysisModelConfig();

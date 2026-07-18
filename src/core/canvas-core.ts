@@ -41,7 +41,9 @@ export function buildCanvasDocument(spec: ArtifactSpec): CanvasDocument {
       title: labels[key] ?? humanizeKey(key),
       content: Array.isArray(value) && value.every((item) => typeof item === "string")
         ? { items: value as string[] }
-        : { text: formatValue(value) },
+        : value !== null && typeof value === "object"
+          ? { data: value }
+          : { text: value == null ? "未指定" : String(value) },
       x: 72 + column * 490,
       y: 210 + row * 270,
       width: 450,
@@ -54,6 +56,21 @@ export function buildCanvasDocument(spec: ArtifactSpec): CanvasDocument {
   });
 
   return { schemaVersion: "1.0", projectId: spec.projectId, nodes, revision: 0, createdAt: now, updatedAt: now };
+}
+
+export function upgradeCanvasDocumentCore(document: CanvasDocument, spec: ArtifactSpec) {
+  const fresh = buildCanvasDocument(spec);
+  const freshById = new Map(fresh.nodes.map((node) => [node.id, node]));
+  let changed = false;
+  const nodes = document.nodes.map((node) => {
+    const replacement = freshById.get(node.id);
+    if (!replacement || replacement.content.data === undefined || node.content.data !== undefined) return node;
+    changed = true;
+    return { ...node, type: replacement.type, title: replacement.title, content: replacement.content };
+  });
+  return changed
+    ? { document: { ...document, nodes, updatedAt: new Date().toISOString() }, changed: true as const }
+    : { document, changed: false as const };
 }
 
 export function applyCanvasActionsCore(document: CanvasDocument, actions: CanvasAction[]): CanvasDocument {
@@ -92,9 +109,3 @@ function clampX(x: number, width: number) { return Math.max(0, Math.min(x, CANVA
 
 function safeNodeId(value: string) { return value.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "node"; }
 function humanizeKey(value: string) { return value.replace(/([a-z])([A-Z])/g, "$1 $2").replaceAll("_", " "); }
-function formatValue(value: unknown) {
-  if (value == null) return "未指定";
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return String(value);
-  if (Array.isArray(value)) return value.map((item) => typeof item === "string" ? `• ${item}` : JSON.stringify(item)).join("\n").slice(0, 4_500);
-  return Object.entries(value as Record<string, unknown>).map(([key, item]) => `${humanizeKey(key)}：${typeof item === "string" ? item : JSON.stringify(item)}`).join("\n").slice(0, 4_500);
-}

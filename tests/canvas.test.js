@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { applyCanvasActionsCore, buildCanvasDocument } from "../src/core/canvas-core.ts";
+import { applyCanvasActionsCore, buildCanvasDocument, upgradeCanvasDocumentCore } from "../src/core/canvas-core.ts";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const now = new Date().toISOString();
@@ -41,6 +41,21 @@ test("通用画布从 ArtifactSpec 生成可编辑的语义节点，而非固定
   assert.ok(canvas.nodes.some((node) => node.id.startsWith("section-writing-")));
   assert.ok(canvas.nodes.some((node) => node.id.startsWith("section-constraints-")));
   assert.equal(canvas.nodes.some((node) => node.id.includes("zhihu")), false);
+  const writingNode = canvas.nodes.find((node) => node.id.startsWith("section-writing-"));
+  assert.deepEqual(writingNode.content.data, writingSpec.writing);
+  assert.equal(writingNode.content.text, undefined);
+});
+
+test("旧版序列化文本画布会无损升级为 GUI 结构化数据", () => {
+  const current = buildCanvasDocument(writingSpec);
+  const writingIndex = current.nodes.findIndex((node) => node.id.startsWith("section-writing-"));
+  current.nodes[writingIndex] = { ...current.nodes[writingIndex], content: { text: "topic：旧版文本" }, x: 333, y: 444 };
+  const upgraded = upgradeCanvasDocumentCore(current, writingSpec);
+  assert.equal(upgraded.changed, true);
+  assert.deepEqual(upgraded.document.nodes[writingIndex].content.data, writingSpec.writing);
+  assert.equal(upgraded.document.nodes[writingIndex].content.text, undefined);
+  assert.equal(upgraded.document.nodes[writingIndex].x, 333);
+  assert.equal(upgraded.document.nodes[writingIndex].y, 444);
 });
 
 test("画布动作支持插入、编辑、移动、缩放和删除，并维护 revision", () => {
@@ -108,6 +123,10 @@ test("确认步骤展示通用 AI 画布，生成端同时读取画布上下文"
   assert.match(generation, /getCanvasDocument/);
   assert.match(model, /CanvasAction/);
   assert.match(model, /不得假设存在知乎、网页、PRD 或图片专用模板/);
+  const canvasUi = await read("src/components/universal/UniversalAiCanvas.tsx");
+  assert.match(canvasUi, /StructuredDataView/);
+  assert.match(canvasUi, /StructuredDataEditor/);
+  assert.equal(canvasUi.includes("JSON.stringify(node.content.data"), false);
 });
 
 test("画布图片拒绝外部 URL，避免模型绕过资源边界", async () => {
