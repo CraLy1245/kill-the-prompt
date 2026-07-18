@@ -1,0 +1,9 @@
+"use client";
+
+import { ArrowLeft, ArrowUpRight, Download, Plus, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { ArtifactIcon, WorkbenchFrame } from "@/components/universal/WorkbenchFrame";
+import type { CreationPack } from "@/types/universal";
+
+export default function PacksPage() { const [packs, setPacks] = useState<CreationPack[]>([]); useEffect(() => { fetch("/api/packs").then((response) => response.json()).then(setPacks); }, []); return <WorkbenchFrame current="packs"><div className="uc-list-page"><div className="uc-list-head"><div><Link className="uc-back-link" href="/"><ArrowLeft size={14} />回到首页</Link><span className="uc-eyebrow">PACK REGISTRY</span><h1>创作包</h1><p>创作包决定我们要经历哪些步骤、做出哪些选择，以及最终如何导出成果。</p></div><Link href="/packs/new" className="uc-primary-button"><Plus size={16} />新建创作包</Link></div><div className="uc-pack-manager-grid">{packs.map((pack) => <article className="uc-manager-card" key={pack.id}><div className="uc-manager-card-top"><ArtifactIcon kind={pack.artifactKind} /><span className={`uc-source ${pack.source}`}>{pack.source === "built-in" ? "系统内置" : "自定义"}</span></div><h2>{pack.name}</h2><p>{pack.description}</p><div className="uc-manager-meta"><span>{pack.flow.steps.filter((step) => step.enabled).length} 个流程步骤</span><span>{pack.decisionModules.length} 个决策模块</span><span>v{pack.version}</span></div><div className="uc-manager-actions"><Link href={`/packs/${encodeURIComponent(pack.id)}`}><ArrowUpRight size={15} />查看配置</Link><a href={`/api/packs/${encodeURIComponent(pack.id)}/export`}><Download size={15} />导出 JSON</a></div></article>)}</div><div className="uc-safety-banner"><ShieldCheck size={20} /><div><strong>创作包是声明式 JSON</strong><p>自定义创作包只能调用已注册的字段类型、步骤、成果类型、编译器和导出器，不能携带 JavaScript、Node 模块或动态 import。</p></div></div></div></WorkbenchFrame>; }

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "id": "image.logo",
+  "name": "Logo 设计",
+  "description": "把原有 Logo 决策漏斗迁移为通用图片成果包。",
+  "version": "1.0.0",
+  "icon": "◒",
+  "artifactKind": "image",
+  "source": "built-in",
+  "inputFields": [
+    { "id": "brand_name", "label": "品牌名称", "type": "text", "required": false },
+    { "id": "brand_type", "label": "品牌与用户", "type": "textarea", "required": true },
+    { "id": "brand_mood", "label": "品牌气质", "type": "tags", "required": false, "allowCustomValue": true },
+    { "id": "usage_scenarios", "label": "应用场景", "type": "tags", "required": false, "allowCustomValue": true },
+    { "id": "must_avoid", "label": "规避元素", "type": "tags", "required": false, "allowCustomValue": true }
+  ],
+  "flow": { "steps": [
+    { "id": "input", "enabled": true }, { "id": "analysis", "enabled": true }, { "id": "directions", "enabled": true },
+    { "id": "decisions", "enabled": true }, { "id": "review", "enabled": true }, { "id": "generate", "enabled": true }, { "id": "refine", "enabled": true }
+  ], "directionConfig": { "count": 5, "allowSkip": false, "differenceDimensions": ["图形主体", "结构", "字体", "色彩"], "minimumDifferenceCount": 2 } },
+  "decisionModules": [
+    { "id": "graphic_subject", "title": "图形主体", "controlType": "single-select", "required": true, "optionSource": "ai-generated", "optionCount": 4 },
+    { "id": "graphic_structure", "title": "结构与复杂度", "controlType": "single-select", "required": true, "optionSource": "preset", "options": [
+      { "id": "symbol", "label": "独立符号", "description": "小尺寸也能识别。" }, { "id": "wordmark", "label": "字标优先", "description": "品牌名承担主要识别。" }, { "id": "lockup", "label": "图文组合", "description": "符号与文字有明确层级。" }
+    ] },
+    { "id": "color_palette", "title": "色彩策略", "controlType": "multi-select", "required": true, "optionSource": "preset", "options": [
+      { "id": "mono", "label": "单色优先", "description": "方便跨媒介使用。" }, { "id": "warm", "label": "暖色信任", "description": "亲和、有温度。" }, { "id": "cool", "label": "冷色专业", "description": "理性、可靠。" }
+    ] }
+  ],
+  "outputConfig": { "formats": ["png", "jpg", "json"], "preview": "image", "allowRefine": true },
+  "compilerConfig": { "compilerId": "image", "rendererId": "image", "exporterIds": ["image", "json"] },
+  "validationRules": [{ "id": "brand-type-required", "fieldId": "brand_type", "rule": "required", "message": "请先描述品牌和目标用户。" }],
+  "createdAt": "2026-07-18T00:00:00.000Z", "updatedAt": "2026-07-18T00:00:00.000Z"
+}

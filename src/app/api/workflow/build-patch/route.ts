@@ -1,0 +1,5 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { artifactSpecPatchSchema } from "@/core/schemas";
+const requestSchema = z.object({ instruction: z.string().trim().min(1), artifactKind: z.enum(["image", "writing", "web-page", "product-feature"]) });
+export async function POST(request: Request) { try { const body = requestSchema.parse(await request.json()); const operations = body.artifactKind === "image" && /背景|底色/.test(body.instruction) ? [{ op: "replace" as const, path: "/image/scene", value: body.instruction }] : body.artifactKind === "web-page" && /Hero|首屏/i.test(body.instruction) ? [{ op: "replace" as const, path: "/webPage/sections/0/purpose", value: body.instruction }] : [{ op: "add" as const, path: "/constraints/mustInclude/-", value: body.instruction }]; return NextResponse.json(artifactSpecPatchSchema.parse({ reason: body.instruction, operations })); } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "修改要求无法解析" }, { status: 400 }); } }

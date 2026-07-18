@@ -1,142 +1,48 @@
 "use client";
 
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Check, Loader2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { AppShell } from "@/components/AppShell";
-import { useLogoFlowStore } from "@/store/useLogoFlowStore";
-import type { AnalyzeLogoResponse } from "@/types/logo";
+import { useEffect, useState } from "react";
+import { builtInPacks } from "@/core/pack-registry";
+import { ArtifactIcon, WorkbenchFrame } from "@/components/universal/WorkbenchFrame";
+import { useWorkspaceStore } from "@/store/useWorkspaceStore";
+import type { CreationPack } from "@/types/universal";
 
-const suggestions = ["极简科技品牌 Logo", "东方美学茶饮品牌", "适合 App 图标的方案", "高级感工作室标识", "运动潮牌视觉符号"];
+const artifactKinds = [
+  { id: "image" as const, title: "图片", description: "插画、人物、商品、海报、Logo、壁纸", color: "plum" },
+  { id: "writing" as const, title: "写作", description: "知乎回答、文章、脚本、产品文案", color: "apricot" },
+  { id: "web-page" as const, title: "网页", description: "落地页、SaaS 首页、工具工作台", color: "blue" },
+  { id: "product-feature" as const, title: "功能设计", description: "PRD、用户流程、页面状态、测试用例", color: "green" },
+];
 
 export default function HomePage() {
   const router = useRouter();
-  const rawInput = useLogoFlowStore((state) => state.rawInput);
-  const isLoading = useLogoFlowStore((state) => state.isLoading);
-  const errorMessage = useLogoFlowStore((state) => state.errorMessage);
-  const modelConfig = useLogoFlowStore((state) => state.modelConfig);
-  const resetForNewInput = useLogoFlowStore((state) => state.resetForNewInput);
-  const setAnalyzeResult = useLogoFlowStore((state) => state.setAnalyzeResult);
-  const setLoading = useLogoFlowStore((state) => state.setLoading);
-  const setError = useLogoFlowStore((state) => state.setError);
-  const [value, setValue] = useState(rawInput);
-  const [isFocused, setIsFocused] = useState(false);
-  const disabled = !value.trim() || isLoading;
+  const workspace = useWorkspaceStore();
+  const [selectedPack, setSelectedPack] = useState<CreationPack>(builtInPacks[0]);
+  const [value, setValue] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    const requestedKind = new URLSearchParams(window.location.search).get("kind");
+    const requestedPack = builtInPacks.find((pack) => pack.artifactKind === requestedKind);
+    if (requestedPack) setSelectedPack(requestedPack);
+  }, []);
 
-  async function submit(nextValue: string) {
-    resetForNewInput(nextValue);
-    setLoading(true);
-    setError(null);
+  async function start() {
+    if (!value.trim()) return;
+    setSubmitting(true); setError(null);
     try {
-      const response = await fetch("/api/analyze-logo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          rawInput: nextValue,
-          providerConfig: modelConfig.analysis,
-        }),
-      });
-      const result = (await response.json()) as AnalyzeLogoResponse & { error?: string };
-      if (!response.ok) throw new Error(result.error || "request failed");
-      setAnalyzeResult(result);
-      router.push("/understanding");
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "生成失败，请重新尝试。");
-    } finally {
-      setLoading(false);
-    }
+      const projectResponse = await fetch("/api/projects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: value.trim().slice(0, 42), artifactKind: selectedPack.artifactKind, packId: selectedPack.id, packVersion: selectedPack.version, rawInput: value.trim() }) });
+      const project = await projectResponse.json(); if (!projectResponse.ok) throw new Error(project.error);
+      const defaultInputValues = Object.fromEntries(selectedPack.inputFields.filter((field) => field.defaultValue !== undefined).map((field) => [field.id, field.defaultValue]));
+      workspace.setPack(selectedPack); workspace.setProject(project.id); workspace.setRawInput(value.trim());
+      const analysisResponse = await fetch("/api/workflow/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ packId: selectedPack.id, rawInput: value.trim(), inputValues: defaultInputValues }) });
+      const analysis = await analysisResponse.json(); if (!analysisResponse.ok) throw new Error(analysis.error);
+      workspace.setAnalysis(analysis.analysis, analysis.directions, analysis.decisionModules);
+      await fetch(`/api/projects/${project.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ currentStep: "directions", inputValues: defaultInputValues, analysis: analysis.analysis, directions: analysis.directions, decisionModules: analysis.decisionModules, selectedDirection: null, decisions: {} }) });
+      router.push(`/workspace/${project.id}`);
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "创建项目失败"); } finally { setSubmitting(false); }
   }
 
-  return (
-    <AppShell variant="home">
-      <section className="grid w-full -translate-y-[2vh] justify-items-center gap-5 text-center">
-        <h1 className="max-w-4xl text-[clamp(34px,5vw,58px)] font-bold leading-[1.08] tracking-normal">
-          模糊的想法，<span className="text-[#003b73]">也能促成专业的设计</span>
-        </h1>
-        <p className="mx-auto max-w-xl text-[15px] leading-7 text-[#626b7f] md:text-[17px]">
-          输入品牌信息和风格偏好，快速获得设计方向与 Logo 方案。
-        </p>
-
-        <form
-          className={[
-            "mt-2 w-[min(100%,880px)] rounded-[30px] p-px shadow-[0_18px_60px_rgba(24,33,66,0.08)] transition",
-            isFocused ? "bg-[#003b73] shadow-[0_18px_70px_rgba(0,59,115,0.18)]" : "bg-[#141823]/10",
-          ].join(" ")}
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!disabled) submit(value.trim());
-          }}
-        >
-          <div className="relative min-h-36 overflow-hidden rounded-[29px] border border-white/70 bg-white/90 backdrop-blur-xl">
-            <label className="sr-only" htmlFor="logo-input">
-              请输入 Logo 需求
-            </label>
-            <textarea
-              id="logo-input"
-              value={value}
-              onChange={(event) => setValue(event.target.value)}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                  event.preventDefault();
-                  if (!disabled) submit(value.trim());
-                }
-              }}
-              placeholder="例如：科技品牌，简洁可靠，适合 App 图标……"
-              className="block min-h-36 w-full resize-none border-0 bg-transparent px-6 pb-16 pt-6 text-[17px] leading-7 text-[#141823] outline-none placeholder:text-[#9aa2b3]"
-            />
-            <div className="absolute bottom-4 left-5 right-4 flex items-center justify-between gap-4">
-              <span
-                className={[
-                  "min-w-0 truncate text-xs text-[#8b94a7] transition md:text-[13px]",
-                  isFocused || value ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
-                ].join(" ")}
-              >
-                Enter 发送 / Shift + Enter 换行
-              </span>
-              <button
-                type="submit"
-                disabled={disabled}
-                className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#003b73] text-white shadow-[0_12px_26px_rgba(0,59,115,0.24)] transition hover:-translate-y-0.5 hover:bg-[#002f5c] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
-                aria-label="提交 Logo 需求"
-              >
-                {isLoading ? <Loader2 size={20} className="animate-spin" /> : <ArrowRight size={21} />}
-              </button>
-            </div>
-          </div>
-        </form>
-
-        <div className="flex w-[min(100%,880px)] flex-wrap justify-center gap-2.5 pt-1" aria-label="快捷建议">
-          {suggestions.map((suggestion) => (
-            <button
-              key={suggestion}
-              className="min-h-11 rounded-full border border-[#141823]/10 bg-white/70 px-4 text-sm text-[#626b7f] shadow-[0_8px_30px_rgba(24,33,66,0.045)] transition hover:-translate-y-0.5 hover:border-[#003b73]/30 hover:bg-white hover:text-[#141823]"
-              type="button"
-              onClick={() => {
-                setValue(suggestion);
-                window.requestAnimationFrame(() => document.getElementById("logo-input")?.focus());
-              }}
-            >
-              {suggestion}
-            </button>
-          ))}
-        </div>
-
-        <div className="min-h-12 w-[min(100%,880px)]" aria-live="polite">
-          {isLoading ? (
-            <div className="mx-auto flex max-w-xl items-center justify-center gap-3 rounded-2xl border border-[#141823]/10 bg-white/75 px-4 py-3 text-sm text-[#626b7f] shadow-[0_10px_40px_rgba(24,33,66,0.055)]">
-              <Loader2 size={18} className="animate-spin text-[#003b73]" />
-              正在解析需求并生成设计方向...
-            </div>
-          ) : null}
-          {errorMessage ? (
-            <div className="mx-auto max-w-xl rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-[0_10px_40px_rgba(24,33,66,0.055)]">
-              {errorMessage}
-            </div>
-          ) : null}
-        </div>
-      </section>
-    </AppShell>
-  );
+  return <WorkbenchFrame><section className="uc-home-hero"><div className="uc-home-copy"><span className="uc-home-mark">UNIVERSAL CREATION ENGINE</span><h1>让提示词去死。</h1><p className="uc-home-lead">说出想法，做出选择，<em>剩下的交给 AI。</em></p><p className="uc-home-description">这不是提示词收藏夹，也不只是一个生图工具。我们把模糊需求拆成结构化方案，再把它编译成图片、文章、网页或产品功能。</p></div><div className="uc-create-card"><div className="uc-card-label"><span>从一句话开始</span><span>{selectedPack.name}</span></div><label className="sr-only" htmlFor="uc-creation-idea">描述你的创作想法</label><textarea id="uc-creation-idea" value={value} onChange={(event) => setValue(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void start(); } }} placeholder="我想做一个……" /><div className="uc-create-footer"><span>Enter 开始 · Shift + Enter 换行</span><button className="uc-primary-button" onClick={() => void start()} disabled={!value.trim() || submitting}>{submitting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}开始创作<ArrowRight size={15} /></button></div>{error ? <div className="uc-inline-error" role="alert">{error}</div> : null}</div></section><section className="uc-output-section"><div className="uc-section-heading"><div><span className="uc-eyebrow">选择成果类型</span><h2>我们要一起做出什么？</h2></div><p>先选成果类型，创作包会自动调整接下来的步骤和问题。</p></div><div className="uc-kind-grid">{artifactKinds.map((kind) => <button key={kind.id} className={`uc-kind-card ${selectedPack.artifactKind === kind.id ? "selected" : ""} ${kind.color}`} onClick={() => { const next = builtInPacks.find((pack) => pack.artifactKind === kind.id); if (next) setSelectedPack(next); }}><ArtifactIcon kind={kind.id} /><span className="uc-kind-check">{selectedPack.artifactKind === kind.id ? <Check size={14} /> : null}</span><h3>{kind.title}</h3><p>{kind.description}</p></button>)}</div></section><section className="uc-packs-section"><div className="uc-section-heading"><div><span className="uc-eyebrow">创作包</span><h2>从一个清晰的起点开始</h2></div><a href="/packs">查看全部创作包 →</a></div><div className="uc-pack-list">{builtInPacks.map((pack) => <button key={pack.id} className={`uc-pack-row ${selectedPack.id === pack.id ? "selected" : ""}`} onClick={() => setSelectedPack(pack)}><ArtifactIcon kind={pack.artifactKind} /><span><strong>{pack.name}</strong><small>{pack.description}</small></span><span className="uc-pack-kind">{artifactKinds.find((kind) => kind.id === pack.artifactKind)?.title}</span><ArrowRight size={16} /></button>)}</div></section></WorkbenchFrame>;
 }

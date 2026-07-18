@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "id": "web.saas-landing-page",
+  "name": "SaaS 落地页",
+  "description": "把产品定位收敛为页面区块、视觉系统和安全可预览的 HTML/CSS。",
+  "version": "1.0.0",
+  "icon": "⌘",
+  "artifactKind": "web-page",
+  "source": "built-in",
+  "inputFields": [
+    { "id": "product_positioning", "label": "产品定位", "type": "textarea", "required": true },
+    { "id": "target_users", "label": "用户群体", "type": "tags", "required": true, "allowCustomValue": true },
+    { "id": "page_goal", "label": "页面目标", "type": "text", "required": true },
+    { "id": "hero_message", "label": "Hero 核心信息", "type": "textarea", "required": false },
+    { "id": "feature_blocks", "label": "功能区块", "type": "tags", "required": false, "allowCustomValue": true },
+    { "id": "trust_elements", "label": "信任元素", "type": "tags", "required": false, "allowCustomValue": true },
+    { "id": "cta", "label": "CTA", "type": "text", "required": false },
+    { "id": "visual_direction", "label": "视觉方向", "type": "tags", "required": false, "allowCustomValue": true },
+    { "id": "responsive_rules", "label": "响应式规则", "type": "textarea", "required": false }
+  ],
+  "flow": { "steps": [
+    { "id": "input", "enabled": true }, { "id": "analysis", "enabled": true }, { "id": "directions", "enabled": true },
+    { "id": "decisions", "enabled": true }, { "id": "review", "enabled": true }, { "id": "generate", "enabled": true }, { "id": "refine", "enabled": true }
+  ], "directionConfig": { "count": 4, "allowSkip": true, "differenceDimensions": ["信息层级", "视觉密度", "转化路径", "品牌气质"], "minimumDifferenceCount": 2 } },
+  "decisionModules": [
+    { "id": "hero_structure", "title": "Hero 结构", "controlType": "single-select", "required": true, "optionSource": "preset", "options": [
+      { "id": "statement", "label": "一句话价值", "description": "用清晰承诺快速说明价值。" }, { "id": "workflow", "label": "工作流展示", "description": "用步骤和界面让能力可感知。" }, { "id": "contrast", "label": "前后对比", "description": "用问题到结果的变化建立说服力。" }
+    ] },
+    { "id": "section_density", "title": "信息密度", "controlType": "single-select", "required": true, "optionSource": "preset", "options": [
+      { "id": "airy", "label": "留白优先", "description": "更像品牌介绍页。" }, { "id": "balanced", "label": "节奏平衡", "description": "功能信息与视觉节奏并重。" }, { "id": "dense", "label": "信息优先", "description": "适合工具与复杂产品。" }
+    ] },
+    { "id": "primary_cta", "title": "主 CTA", "controlType": "single-select", "required": true, "optionSource": "preset", "allowCustomValue": true, "options": [
+      { "id": "start", "label": "开始体验", "description": "让用户直接进入第一次操作。" }, { "id": "demo", "label": "预约演示", "description": "适合需要先了解产品的场景。" }, { "id": "learn", "label": "了解更多", "description": "先阅读产品能力与使用方式。" }
+    ] }
+  ],
+  "outputConfig": { "formats": ["html", "css", "js", "json"], "preview": "web", "allowRefine": true },
+  "compilerConfig": { "compilerId": "web-page", "rendererId": "web-page", "exporterIds": ["html", "css", "zip", "json"] },
+  "validationRules": [{ "id": "positioning-required", "fieldId": "product_positioning", "rule": "required", "message": "请先说明产品为谁解决什么问题。" }],
+  "createdAt": "2026-07-18T00:00:00.000Z", "updatedAt": "2026-07-18T00:00:00.000Z"
+}

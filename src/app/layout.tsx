@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI Logo Decision Funnel",
-  description: "用漏斗筛选逻辑把模糊 Logo 需求收敛为可执行 AI 设计方案。",
+  title: "让提示词去死 · 通用创作工作台",
+  description: "说出想法，做出选择，剩下的交给 AI。把模糊需求转成图片、文章、网页和产品功能。",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

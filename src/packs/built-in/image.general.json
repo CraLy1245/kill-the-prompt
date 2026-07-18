@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "id": "image.general",
+  "name": "通用图片创作",
+  "description": "从模糊画面想法收敛为可生成的图片方案。",
+  "version": "1.0.0",
+  "icon": "✦",
+  "artifactKind": "image",
+  "source": "built-in",
+  "inputFields": [
+    { "id": "subject", "label": "想画什么", "description": "主体、人物、商品或场景。", "type": "textarea", "required": true },
+    { "id": "scene", "label": "场景与用途", "type": "textarea", "required": false },
+    { "id": "style", "label": "视觉风格", "type": "tags", "required": false, "allowCustomValue": true },
+    { "id": "aspect_ratio", "label": "画面比例", "type": "aspect-ratio", "required": true, "defaultValue": "1:1" },
+    { "id": "must_avoid", "label": "不要出现", "type": "tags", "required": false, "allowCustomValue": true }
+  ],
+  "flow": { "steps": [
+    { "id": "input", "enabled": true }, { "id": "analysis", "enabled": true }, { "id": "directions", "enabled": true },
+    { "id": "decisions", "enabled": true }, { "id": "review", "enabled": true }, { "id": "generate", "enabled": true }, { "id": "refine", "enabled": true }
+  ], "directionConfig": { "count": 4, "allowSkip": false, "differenceDimensions": ["主体关系", "构图", "材质", "情绪"], "minimumDifferenceCount": 2 } },
+  "decisionModules": [
+    { "id": "composition", "title": "构图怎么安排", "description": "决定主体与留白的关系。", "controlType": "single-select", "required": true, "optionSource": "preset", "options": [
+      { "id": "focus", "label": "主体聚焦", "description": "让主体清晰占据视觉中心。" }, { "id": "editorial", "label": "编辑感留白", "description": "保留文字或信息排版空间。" }, { "id": "scene", "label": "叙事场景", "description": "让主体与环境共同讲故事。" }
+    ] },
+    { "id": "lighting", "title": "光线与质感", "controlType": "multi-select", "required": true, "optionSource": "preset", "options": [
+      { "id": "soft", "label": "柔和自然光", "description": "自然、轻松、不过度戏剧化。" }, { "id": "studio", "label": "干净棚拍光", "description": "适合商品与清晰边缘。" }, { "id": "cinematic", "label": "电影感侧光", "description": "增加情绪与方向性。" }
+    ] },
+    { "id": "color_mood", "title": "颜色情绪", "controlType": "single-select", "required": true, "optionSource": "ai-generated", "optionCount": 4, "allowCustomValue": true }
+  ],
+  "outputConfig": { "formats": ["png", "jpg", "json"], "preview": "image", "allowRefine": true },
+  "compilerConfig": { "compilerId": "image", "rendererId": "image", "exporterIds": ["image", "json"] },
+  "validationRules": [{ "id": "subject-required", "fieldId": "subject", "rule": "required", "message": "请先说出想画的主体。" }],
+  "createdAt": "2026-07-18T00:00:00.000Z", "updatedAt": "2026-07-18T00:00:00.000Z"
+}

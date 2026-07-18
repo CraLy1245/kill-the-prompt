@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "id": "writing.zhihu-answer",
+  "name": "知乎回答",
+  "description": "先确定判断和论证结构，再生成可读、可修改的 Markdown 回答。",
+  "version": "1.0.0",
+  "icon": "文",
+  "artifactKind": "writing",
+  "source": "built-in",
+  "inputFields": [
+    { "id": "question", "label": "问题或主题", "type": "textarea", "required": true },
+    { "id": "core_judgment", "label": "核心判断", "type": "textarea", "required": true },
+    { "id": "target_readers", "label": "目标读者", "type": "tags", "required": true, "allowCustomValue": true },
+    { "id": "argument_structure", "label": "论证结构", "type": "textarea", "required": false },
+    { "id": "tone", "label": "语气", "type": "tags", "required": true, "allowCustomValue": true },
+    { "id": "counter_view", "label": "反方观点", "type": "textarea", "required": false },
+    { "id": "target_length", "label": "篇幅", "type": "number", "required": true, "defaultValue": 1600 },
+    { "id": "formatting", "label": "排版", "type": "tags", "required": false, "allowCustomValue": true }
+  ],
+  "flow": { "steps": [
+    { "id": "input", "enabled": true }, { "id": "analysis", "enabled": true }, { "id": "directions", "enabled": true },
+    { "id": "decisions", "enabled": true }, { "id": "review", "enabled": true }, { "id": "generate", "enabled": true }, { "id": "refine", "enabled": true }
+  ], "directionConfig": { "count": 3, "allowSkip": false, "differenceDimensions": ["立场", "读者", "论证路径"], "minimumDifferenceCount": 2 } },
+  "decisionModules": [
+    { "id": "stance", "title": "回答站位", "controlType": "single-select", "required": true, "optionSource": "preset", "options": [
+      { "id": "direct", "label": "先给结论", "description": "开头直接回答问题，再解释原因。" }, { "id": "story", "label": "从经历切入", "description": "用具体经验降低距离感。" }, { "id": "framework", "label": "框架拆解", "description": "把复杂问题拆成可复用方法。" }
+    ] },
+    { "id": "evidence", "title": "证据强度", "controlType": "single-select", "required": true, "optionSource": "preset", "options": [
+      { "id": "experience", "label": "经验优先", "description": "明确区分个人经验与普遍结论。" }, { "id": "balanced", "label": "经验与事实并列", "description": "在不编造事实的前提下平衡两者。" }, { "id": "cautious", "label": "谨慎论证", "description": "对不确定内容显式标记。" }
+    ] },
+    { "id": "ending", "title": "结尾方式", "controlType": "single-select", "required": true, "optionSource": "ai-generated", "optionCount": 3 }
+  ],
+  "outputConfig": { "formats": ["md", "json"], "preview": "markdown", "allowRefine": true },
+  "compilerConfig": { "compilerId": "writing", "rendererId": "writing", "exporterIds": ["markdown", "json"] },
+  "validationRules": [{ "id": "question-required", "fieldId": "question", "rule": "required", "message": "请先写下问题或主题。" }],
+  "createdAt": "2026-07-18T00:00:00.000Z", "updatedAt": "2026-07-18T00:00:00.000Z"
+}

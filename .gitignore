@@ -12,3 +12,4 @@ next-dev-*.log
 dev-server*.log
 *.tsbuildinfo
 tsconfig.tsbuildinfo
+.local-data/

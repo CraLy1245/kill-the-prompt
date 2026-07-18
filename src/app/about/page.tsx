@@ -1,0 +1,3 @@
+import Link from "next/link";
+import { WorkbenchFrame } from "@/components/universal/WorkbenchFrame";
+export default function AboutPage() { return <WorkbenchFrame><div className="uc-list-page uc-about-page"><span className="uc-eyebrow">ABOUT THE ENGINE</span><h1>不是提示词工具，是创作编译器。</h1><p className="uc-about-lead">「让提示词去死」把用户模糊想法转成结构化 ArtifactSpec，再由不同成果编译器生成图片、文章、网页或产品功能文档。</p><div className="uc-about-flow"><span>模糊需求</span><b>→</b><span>意图分析</span><b>→</b><span>方向选择</span><b>→</b><span>ArtifactSpec</span><b>→</b><span>成果</span></div><Link href="/create" className="uc-primary-button">开始一次创作</Link></div></WorkbenchFrame>; }

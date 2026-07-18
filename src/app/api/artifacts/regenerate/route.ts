@@ -1,0 +1,7 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { artifactSpecPatchSchema, artifactSpecSchema } from "@/core/schemas";
+import { applyArtifactSpecPatch } from "@/core/patch";
+import { fileStorage } from "@/core/storage/file-storage";
+const requestSchema = z.object({ projectId: z.string().min(1), patch: z.unknown() });
+export async function POST(request: Request) { try { const body = requestSchema.parse(await request.json()); const project = await fileStorage.getProject(body.projectId); const spec = await fileStorage.getArtifactSpec(body.projectId); if (!project || !spec) return NextResponse.json({ error: "项目方案不存在" }, { status: 404 }); const patch = artifactSpecPatchSchema.parse(body.patch); const next = artifactSpecSchema.parse(applyArtifactSpecPatch(spec, patch)); await fileStorage.saveArtifactSpec(project.id, next); const revisions = await fileStorage.getRevisions(project.id); revisions.push({ id: crypto.randomUUID(), projectId: project.id, createdAt: new Date().toISOString(), reason: patch.reason, patch }); await fileStorage.saveRevisions(project.id, revisions); await fileStorage.saveProject({ ...project, currentStep: "refine", resultStatus: "ready", updatedAt: new Date().toISOString() }); return NextResponse.json({ spec: next, revisions }); } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "修改无法应用" }, { status: 400 }); } }
