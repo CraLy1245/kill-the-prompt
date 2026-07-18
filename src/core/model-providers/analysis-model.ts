@@ -88,6 +88,7 @@ function mergeDecisionModules(pack: CreationPack, generatedModules: z.infer<type
 
 export async function buildSpecWithModel(params: { projectId: string; pack: CreationPack; rawInput: string; inputValues: Record<string, unknown>; analysis: Record<string, unknown>; selectedDirection?: CreativeDirection; decisions: Record<string, unknown> }): Promise<ArtifactSpec> {
   const writingDefaults = getWritingDefaults(params.pack, params.inputValues);
+  const webPageDefaults = getWebPageDefaults(params);
   const prompt = [
     "任务：把已确认的需求、方向与决策转换成可供执行模型消费的结构化 ArtifactSpec 草稿。",
     `artifactKind 必须是 ${params.pack.artifactKind}。`,
@@ -99,10 +100,11 @@ export async function buildSpecWithModel(params: { projectId: string; pack: Crea
     "product-feature: { artifactKind, constraints, feature }",
     "constraints 必须包含 mustInclude、mustAvoid、mustKeep 三个字符串数组。",
     params.pack.artifactKind === "writing" ? `writing 必须严格包含：{ topic: string, platform: string, audience: string[], purpose: string, thesis: string, supportingClaims: string[], counterArguments: string[], structure: [{ id: string, title: string, purpose: string, keyPoints: string[] }], tone: string[], targetLength: integer, formattingRules: string[], confirmedFacts: string[], uncertainFacts: string[] }。structure 不得使用字符串数组。platform 默认使用“${writingDefaults.platform}”，tone 必须是字符串数组。` : "",
+    params.pack.artifactKind === "web-page" ? "webPage 必须严格包含：{ productName: string, productPurpose: string, targetUsers: string[], pageType: string, primaryGoal: string, sections: [{ id: string, type: string, title: string, purpose: string, content: object }], visualSystem: { direction: string, typography: string, spacing: string, radius: string, colors: string[], motion: string[] }, responsiveRules: string[], interactionRules: string[], exportFormat: 'html-css' }。sections、responsiveRules 和 interactionRules 不得返回对象数组。" : "",
     "输入：",
     JSON.stringify(params),
   ].join("\n\n");
-  const draft = await callStructuredModel({ config: getAnalysisModelConfig(), task: "build-spec", system, prompt, schema: artifactDraftSchema, normalize: (value) => normalizeArtifactDraft(value, writingDefaults) });
+  const draft = await callStructuredModel({ config: getAnalysisModelConfig(), task: "build-spec", system, prompt, schema: artifactDraftSchema, normalize: (value) => normalizeArtifactDraft(value, writingDefaults, webPageDefaults) });
   if (draft.artifactKind !== params.pack.artifactKind) throw new ModelOutputError("分析模型返回的成果类型与创作包不一致");
   const now = new Date().toISOString();
   return artifactSpecSchema.parse({
@@ -118,6 +120,22 @@ export async function buildSpecWithModel(params: { projectId: string; pack: Crea
     createdAt: now,
     updatedAt: now,
   }) as ArtifactSpec;
+}
+
+function getWebPageDefaults(params: { pack: CreationPack; rawInput: string; inputValues: Record<string, unknown>; analysis: Record<string, unknown> }) {
+  const analysisAudience = Array.isArray(params.analysis.audience) ? params.analysis.audience.filter((item): item is string => typeof item === "string" && Boolean(item.trim())) : [];
+  const inputAudience = Array.isArray(params.inputValues.target_users) ? params.inputValues.target_users.filter((item): item is string => typeof item === "string" && Boolean(item.trim())) : [];
+  return {
+    productName: stringValue(params.inputValues.product_name) || params.rawInput,
+    productPurpose: stringValue(params.inputValues.product_positioning) || stringValue(params.analysis.goal) || params.rawInput,
+    targetUsers: inputAudience.length ? inputAudience : analysisAudience,
+    pageType: params.pack.name,
+    primaryGoal: stringValue(params.inputValues.page_goal) || stringValue(params.analysis.goal) || "清晰传达产品价值并引导下一步行动",
+  };
+}
+
+function stringValue(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
 }
 
 function getWritingDefaults(pack: CreationPack, inputValues: Record<string, unknown>) {

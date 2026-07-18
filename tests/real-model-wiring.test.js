@@ -54,6 +54,33 @@ test("writing 草稿兼容缺失平台、字符串结构和缺失语气", async 
   assert.deepEqual(normalized.writing.structure[0].keyPoints, ["先区分阅读习惯与阅读人设"]);
 });
 
+test("web-page 草稿兼容区块别名和对象形式的规则", async () => {
+  const { normalizeArtifactDraft } = await import("../src/core/model-providers/artifact-draft-normalizer.ts");
+  const normalized = normalizeArtifactDraft({
+    artifactKind: "web-page",
+    constraints: {},
+    webPage: {
+      sections: [{ name: "首屏", description: "说明核心价值", layout: "hero", content: "一句主张与行动按钮" }],
+      visualSystem: { style: "克制的智能工作空间", palette: [{ name: "主色", value: "梅紫" }] },
+      responsiveRules: [{ breakpoint: "768px", rule: "切换为单列布局" }],
+      interactionRules: [{ title: "主按钮", description: "提供明确的悬停状态" }],
+    },
+  }, { platform: "", tone: [], targetLength: 1600 }, {
+    productName: "AI 工作台",
+    productPurpose: "把零散 AI 任务放进统一工作空间",
+    targetUsers: ["小团队"],
+    pageType: "SaaS 落地页",
+    primaryGoal: "引导免费试用",
+  });
+  assert.equal(normalized.webPage.sections[0].title, "首屏");
+  assert.equal(normalized.webPage.sections[0].type, "hero");
+  assert.deepEqual(normalized.webPage.sections[0].content, { value: "一句主张与行动按钮" });
+  assert.deepEqual(normalized.webPage.visualSystem.colors, ["主色：梅紫"]);
+  assert.deepEqual(normalized.webPage.responsiveRules, ["768px：切换为单列布局"]);
+  assert.deepEqual(normalized.webPage.interactionRules, ["主按钮：提供明确的悬停状态"]);
+  assert.equal(normalized.webPage.exportFormat, "html-css");
+});
+
 test("结构化输出可修复缺失逗号、尾随逗号和字符串换行", async () => {
   const { extractJsonObject } = await import("../src/lib/validators.ts");
   const parsed = extractJsonObject('```json\n{"summary":"第一行\n第二行""directions":[{"id":"a",}],}\n```');
