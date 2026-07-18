@@ -6,6 +6,14 @@ const nonEmpty = z.string().trim().min(1);
 const stringList = z.array(z.string().trim().min(1));
 const unknownRecord = z.record(z.string(), z.unknown());
 
+export const creativeDirectionSchema = z.object({
+  id: nonEmpty,
+  title: nonEmpty,
+  summary: nonEmpty,
+  differences: stringList.min(1),
+  recommended: z.boolean().optional(),
+});
+
 export const fieldDefinitionSchema = z.object({
   id,
   label: nonEmpty,
@@ -33,6 +41,24 @@ export const decisionModuleDefinitionSchema = z.object({
   optionCount: z.number().int().min(2).max(8).optional(),
   allowCustomValue: z.boolean().optional(),
   applicableWhen: z.object({ fieldId: id, operator: z.enum(["equals", "not-equals", "includes"]), value: z.unknown() }).optional(),
+});
+
+export const runtimeDecisionModuleSchema = decisionModuleDefinitionSchema.extend({
+  options: z.array(z.object({ id: nonEmpty, label: nonEmpty, description: z.string().optional(), recommended: z.boolean().optional() })).min(2),
+});
+
+export const workflowAnalysisResultSchema = z.object({
+  analysis: z.object({
+    intent: nonEmpty,
+    goal: nonEmpty,
+    audience: stringList,
+    explicitRequirements: stringList,
+    constraints: stringList,
+    uncertainPoints: stringList,
+    assumptions: stringList,
+  }),
+  directions: z.array(creativeDirectionSchema).min(2).max(8),
+  decisionModules: z.array(runtimeDecisionModuleSchema),
 });
 
 export const validationRuleSchema = z.object({ id: nonEmpty, fieldId: id, rule: z.enum(["required", "min-length", "max-length", "min-items"]), value: z.number().optional(), message: nonEmpty });
@@ -81,7 +107,7 @@ const baseArtifactSpecSchema = z.object({
   packVersion: nonEmpty,
   rawInput: nonEmpty,
   analysis: unknownRecord,
-  selectedDirection: z.object({ id: nonEmpty, title: nonEmpty, summary: nonEmpty, differences: stringList, recommended: z.boolean().optional() }).optional(),
+  selectedDirection: creativeDirectionSchema.optional(),
   decisions: unknownRecord,
   constraints: z.object({ mustInclude: stringList, mustAvoid: stringList, mustKeep: stringList }),
   createdAt: z.string().datetime(),

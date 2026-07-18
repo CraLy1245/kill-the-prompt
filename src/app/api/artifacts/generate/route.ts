@@ -1,32 +1,53 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { artifactSpecSchema } from "@/core/schemas";
 import { compilerList } from "@/core/compilers";
+import { executeArtifactWithModel, requestExecutionImage } from "@/core/model-providers/execution-model";
+import { getExecutionImageConfig, getExecutionModelConfig } from "@/core/model-providers/config";
+import { withModelRun } from "@/core/model-providers/model-run";
+import { artifactSpecSchema } from "@/core/schemas";
 import { fileStorage } from "@/core/storage/file-storage";
-import { buildImagesEndpoint, resolveImageModel } from "@/lib/modelRegistry";
 import type { ArtifactResult, CompilerContext } from "@/types/universal";
 
-const requestSchema = z.object({ spec: z.unknown(), providerConfig: z.object({ apiKey: z.string().optional(), baseUrl: z.string().optional(), model: z.string().optional() }).optional() });
+const requestSchema = z.object({ spec: z.unknown() });
 export const maxDuration = 180;
+
 export async function POST(request: Request) {
   try {
     const body = requestSchema.parse(await request.json());
     const spec = artifactSpecSchema.parse(body.spec);
+    const project = await fileStorage.getProject(spec.projectId);
+    if (!project) return NextResponse.json({ error: "项目不存在" }, { status: 404 });
+    const persistedSpec = await fileStorage.getArtifactSpec(spec.projectId);
+    if (!persistedSpec || persistedSpec.updatedAt !== spec.updatedAt) return NextResponse.json({ error: "方案版本已变化，请刷新后重新生成" }, { status: 409 });
     const compiler = compilerList.find((item) => item.artifactKind === spec.artifactKind);
     if (!compiler) return NextResponse.json({ error: "成果编译器未注册" }, { status: 500 });
-    const context: CompilerContext = { projectId: spec.projectId, now: new Date().toISOString() };
-    if (spec.artifactKind === "image") context.requestImage = async (prompt, negativePrompt) => {
-      const model = resolveImageModel(body.providerConfig);
-      if (!model.apiKey) return { url: "" };
-      const response = await fetch(buildImagesEndpoint(model.baseUrl), { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${model.apiKey}` }, body: JSON.stringify({ model: model.id, prompt, negative_prompt: negativePrompt, size: "1024x1024", response_format: "url" }), signal: AbortSignal.timeout(170000) });
-      if (!response.ok) throw new Error("图片生成接口失败");
-      const data = await response.json() as { data?: Array<{ url?: string }> };
-      return { url: data.data?.[0]?.url ?? "" };
+    const context: CompilerContext = {
+      projectId: spec.projectId,
+      now: new Date().toISOString(),
+      requestArtifact: executeArtifactWithModel,
+      requestImage: requestExecutionImage,
     };
-    const result = await (compiler as unknown as { compile: (value: typeof spec, value2: CompilerContext) => Promise<ArtifactResult> }).compile(spec, context);
+    const model = spec.artifactKind === "image" ? getExecutionImageConfig().model : getExecutionModelConfig().model;
+    let result = await withModelRun({ projectId: spec.projectId, role: "execution", task: `execute:${spec.artifactKind}`, model }, () => (compiler as unknown as { compile: (value: typeof spec, context: CompilerContext) => Promise<ArtifactResult> }).compile(spec, context));
+    if (result.artifactKind === "image") result = await persistImageAssets(spec.projectId, result);
     await fileStorage.saveArtifactResult(spec.projectId, result);
-    const project = await fileStorage.getProject(spec.projectId);
-    if (project) await fileStorage.saveProject({ ...project, currentStep: "generate", resultStatus: "generated", updatedAt: new Date().toISOString() });
+    await fileStorage.saveProject({ ...project, currentStep: "generate", resultStatus: "generated", updatedAt: new Date().toISOString() });
     return NextResponse.json(result);
-  } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "成果生成失败" }, { status: 400 }); }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "成果生成失败";
+    return NextResponse.json({ error: message }, { status: /未配置/.test(message) ? 503 : 502 });
+  }
+}
+
+async function persistImageAssets(projectId: string, result: Extract<ArtifactResult, { artifactKind: "image" }>): Promise<typeof result> {
+  const images = await Promise.all(result.images.map(async (image, index) => {
+    const response = await fetch(image.url, { signal: AbortSignal.timeout(45_000) });
+    if (!response.ok) throw new Error(`生成图片下载失败（HTTP ${response.status}）`);
+    const contentType = response.headers.get("content-type") ?? "image/png";
+    const extension = contentType.includes("jpeg") ? "jpg" : contentType.includes("webp") ? "webp" : "png";
+    const fileName = `generated-${index + 1}.${extension}`;
+    const localPath = await fileStorage.saveAsset(projectId, fileName, new Uint8Array(await response.arrayBuffer()));
+    return { ...image, url: `/api/artifacts/${encodeURIComponent(projectId)}/assets/${encodeURIComponent(fileName)}`, localPath };
+  }));
+  return { ...result, images };
 }

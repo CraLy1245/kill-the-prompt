@@ -133,7 +133,14 @@ npm run typecheck
 npm run build
 ```
 
-打开 `http://localhost:3000`。模型 API Key 不配置时，工作区仍可通过本地结构化演示完成四类流程；配置现有 `.env.local` 图片模型变量后，`image` 成果会继续调用原项目图片接口。
+复制 `.env.local.example` 为 `.env.local`，分别配置分析模型、文本执行模型和执行模型的图片驱动，然后打开 `http://localhost:3000`。通用工作流不会在模型缺失时静默回退到演示结果。
+
+模型职责只分为两个业务角色：
+
+- `analysis`：分析需求、生成方向与决策、构建 `ArtifactSpec`、解析修改 Patch。
+- `execution`：只消费已确认的 `ArtifactSpec`，生成文章、网页、PRD 或图片。图片通过 execution 角色下的图片 API 驱动调用。
+
+所有通用模型配置均由服务端环境变量读取。浏览器不接收或保存 API Key。
 
 ## 已完成
 
@@ -147,10 +154,10 @@ npm run build
 
 ## 当前限制与下一步
 
-- 初版 AI 工作流默认使用本地结构化演示编译；通用模型 provider 的严格 JSON 调用和一次自动修复仍应进一步抽到 `core/model-providers/`。
+- 通用 AI 工作流已经接入 `core/model-providers/`：分析模型和执行模型独立配置，严格校验 JSON，并在首次格式失败后进行一次修复请求。
 - 自定义创作包的可视化编辑器已预留路由，目前可通过安全 JSON API 导入/导出；没有执行任意配置代码的入口。
-- 本地资产文件复制、项目压缩包导出和完整项目版本回退可在下一迭代补齐。
-- 建议继续增加 Playwright E2E、四类成果的 fixture 和更细的 Patch 路径白名单测试。
+- 生成图片会复制到项目资产目录，模型调用状态记录在 `model-runs.json`；项目压缩包导出和完整版本回退仍可继续补齐。
+- 建议继续增加真实供应商的 staging 合同测试和四类成果的固定回归样例。
 
 ## 从旧 Logo 项目迁移
 

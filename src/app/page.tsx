@@ -32,12 +32,12 @@ export default function HomePage() {
     if (!value.trim()) return;
     setSubmitting(true); setError(null);
     try {
-      const projectResponse = await fetch("/api/projects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: value.trim().slice(0, 42), artifactKind: selectedPack.artifactKind, packId: selectedPack.id, packVersion: selectedPack.version, rawInput: value.trim() }) });
-      const project = await projectResponse.json(); if (!projectResponse.ok) throw new Error(project.error);
       const defaultInputValues = Object.fromEntries(selectedPack.inputFields.filter((field) => field.defaultValue !== undefined).map((field) => [field.id, field.defaultValue]));
-      workspace.setPack(selectedPack); workspace.setProject(project.id); workspace.setRawInput(value.trim());
       const analysisResponse = await fetch("/api/workflow/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ packId: selectedPack.id, rawInput: value.trim(), inputValues: defaultInputValues }) });
       const analysis = await analysisResponse.json(); if (!analysisResponse.ok) throw new Error(analysis.error);
+      const projectResponse = await fetch("/api/projects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: value.trim().slice(0, 42), artifactKind: selectedPack.artifactKind, packId: selectedPack.id, packVersion: selectedPack.version, rawInput: value.trim() }) });
+      const project = await projectResponse.json(); if (!projectResponse.ok) throw new Error(project.error);
+      workspace.setPack(selectedPack); workspace.setProject(project.id); workspace.setRawInput(value.trim());
       workspace.setAnalysis(analysis.analysis, analysis.directions, analysis.decisionModules);
       await fetch(`/api/projects/${project.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ currentStep: "directions", inputValues: defaultInputValues, analysis: analysis.analysis, directions: analysis.directions, decisionModules: analysis.decisionModules, selectedDirection: null, decisions: {} }) });
       router.push(`/workspace/${project.id}`);

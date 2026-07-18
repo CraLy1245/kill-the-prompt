@@ -273,6 +273,37 @@ export type CompilerContext = {
   projectId: string;
   now: string;
   requestImage?: (prompt: string, negativePrompt?: string) => Promise<{ url: string }>;
+  requestArtifact?: (spec: ArtifactSpec) => Promise<ArtifactResult>;
+};
+
+export type ModelRole = "analysis" | "execution";
+
+export type ServerModelConfig = {
+  role: ModelRole;
+  model: string;
+  baseUrl: string;
+  apiKey: string;
+  timeoutMs: number;
+};
+
+export type PublicModelRoleStatus = {
+  role: ModelRole;
+  model: string;
+  baseUrl: string;
+  configured: boolean;
+};
+
+export type ModelRunRecord = {
+  id: string;
+  projectId: string;
+  role: ModelRole;
+  task: string;
+  model: string;
+  status: "running" | "succeeded" | "failed";
+  startedAt: string;
+  completedAt?: string;
+  durationMs?: number;
+  errorCode?: string;
 };
 
 export interface ArtifactCompiler<TSpec extends ArtifactSpec, TResult extends ArtifactResult> {

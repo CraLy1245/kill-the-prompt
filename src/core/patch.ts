@@ -2,8 +2,16 @@ import { artifactSpecPatchSchema, artifactSpecSchema } from "@/core/schemas";
 import type { ArtifactSpec, ArtifactSpecPatch } from "@/types/universal";
 
 function segments(path: string) { return path.replace(/^\//, "").split("/").map((part) => part.replaceAll("~1", "/").replaceAll("~0", "~")); }
+export function assertAllowedPatchPaths(spec: ArtifactSpec, patch: ArtifactSpecPatch) {
+  const artifactRoot = spec.artifactKind === "image" ? "/image" : spec.artifactKind === "writing" ? "/writing" : spec.artifactKind === "web-page" ? "/webPage" : "/feature";
+  for (const operation of patch.operations) {
+    const allowed = operation.path === artifactRoot || operation.path.startsWith(`${artifactRoot}/`) || operation.path === "/constraints" || operation.path.startsWith("/constraints/");
+    if (!allowed) throw new Error(`Patch 路径不在允许范围内：${operation.path}`);
+  }
+}
 export function applyArtifactSpecPatch(spec: ArtifactSpec, patch: ArtifactSpecPatch): ArtifactSpec {
   const parsedPatch = artifactSpecPatchSchema.parse(patch);
+  assertAllowedPatchPaths(spec, parsedPatch);
   const next = structuredClone(spec) as unknown as Record<string, unknown>;
   for (const operation of parsedPatch.operations) {
     const keys = segments(operation.path);

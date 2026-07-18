@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/creation-packs.test.js"
+    "test": "node --test"
   },
   "keywords": [
     "ai-logo-decision-funnel",

@@ -8,7 +8,6 @@ import {
   CircleAlert,
   Clock3,
   Loader2,
-  LockKeyhole,
   RefreshCw,
   Send,
   Sparkles,
@@ -21,8 +20,6 @@ import { WorkspaceField } from "@/components/universal/WorkspaceField";
 import { getStepLabel } from "@/core/flow-engine";
 import { useWorkspaceStore, type WorkspaceState } from "@/store/useWorkspaceStore";
 import type { ArtifactResult, CreationPack, FlowStepId, ProjectRecord, RevisionRecord } from "@/types/universal";
-
-type ModelConfig = { apiKey: string; baseUrl: string; model: string };
 
 const stepDescriptions: Record<FlowStepId, string> = {
   input: "理解你的想法",
@@ -42,7 +39,6 @@ const previewImages = [
 
 export function WorkspaceClient({ projectId }: { projectId: string }) {
   const store = useWorkspaceStore();
-  const [modelConfig, setModelConfig] = useState<ModelConfig | undefined>();
 
   useEffect(() => {
     if (store.projectId === projectId && store.pack) return;
@@ -72,7 +68,7 @@ export function WorkspaceClient({ projectId }: { projectId: string }) {
     void fetch(`/api/projects/${projectId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ currentStep: step, updatedAt: new Date().toISOString() }),
+      body: JSON.stringify({ currentStep: step }),
     });
   }
 
@@ -103,7 +99,7 @@ export function WorkspaceClient({ projectId }: { projectId: string }) {
       const response = await fetch("/api/workflow/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packId: store.pack.id, rawInput: store.rawInput, inputValues: store.inputValues }),
+        body: JSON.stringify({ projectId, packId: store.pack.id, rawInput: store.rawInput, inputValues: store.inputValues }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
@@ -164,7 +160,7 @@ export function WorkspaceClient({ projectId }: { projectId: string }) {
       const response = await fetch("/api/artifacts/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ spec: store.artifactSpec, providerConfig: modelConfig }),
+        body: JSON.stringify({ spec: store.artifactSpec }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
@@ -205,8 +201,6 @@ export function WorkspaceClient({ projectId }: { projectId: string }) {
               analyze={analyze}
               buildSpec={buildSpec}
               generate={generate}
-              modelConfig={modelConfig}
-              setModelConfig={setModelConfig}
               onStep={moveTo}
               onSelectDirection={selectDirection}
               onSetDecision={setDecision}
@@ -256,8 +250,6 @@ function StageContent({
   analyze,
   buildSpec,
   generate,
-  modelConfig,
-  setModelConfig,
   onStep,
   onSelectDirection,
   onSetDecision,
@@ -267,8 +259,6 @@ function StageContent({
   analyze: () => Promise<void>;
   buildSpec: () => Promise<void>;
   generate: () => Promise<void>;
-  modelConfig: ModelConfig | undefined;
-  setModelConfig: (config: ModelConfig | undefined) => void;
   onStep: (step: FlowStepId) => void;
   onSelectDirection: (direction: WorkspaceState["directions"][number]) => void;
   onSetDecision: (moduleId: string, value: unknown) => void;
@@ -278,7 +268,7 @@ function StageContent({
   if (stage === "directions") return <DirectionsStage store={store} onStep={onStep} onSelect={onSelectDirection} />;
   if (stage === "decisions") return <DecisionsStage store={store} onStep={onStep} onSetDecision={onSetDecision} />;
   if (stage === "review") return <ReviewStage store={store} onBuild={buildSpec} onStep={onStep} />;
-  if (stage === "generate") return <GenerateStage store={store} onGenerate={generate} modelConfig={modelConfig} setModelConfig={setModelConfig} onStep={onStep} />;
+  if (stage === "generate") return <GenerateStage store={store} onGenerate={generate} onStep={onStep} />;
   return <RefineStage store={store} onStep={onStep} />;
 }
 
@@ -362,12 +352,11 @@ function ReviewStage({ store, onBuild, onStep }: { store: WorkspaceState; onBuil
   );
 }
 
-function GenerateStage({ store, onGenerate, modelConfig, setModelConfig, onStep }: { store: WorkspaceState; onGenerate: () => Promise<void>; modelConfig: ModelConfig | undefined; setModelConfig: (config: ModelConfig | undefined) => void; onStep: (step: FlowStepId) => void }) {
+function GenerateStage({ store, onGenerate, onStep }: { store: WorkspaceState; onGenerate: () => Promise<void>; onStep: (step: FlowStepId) => void }) {
   return (
     <div className="uc-stage-card uc-generate-stage">
       <StageIntro number="06" label="生成" title="把方案变成可用成果" description="网页在安全沙箱中预览，写作与功能设计直接展示 Markdown，图片继续使用现有生图接口。" />
       {store.artifactResult ? <ArtifactPreview result={store.artifactResult} /> : <div className="uc-generate-empty"><Sparkles size={28} /><strong>等待生成</strong><p>根据已经确认的结构化方案，编译最终成果。</p><button className="uc-primary-button" onClick={onGenerate} disabled={store.isLoading || !store.artifactSpec}>{store.isLoading ? <Loader2 className="animate-spin" size={16} /> : <Sparkles size={16} />}生成成果</button></div>}
-      {store.pack?.artifactKind === "image" ? <details className="uc-advanced"><summary>高级模式：图片模型配置</summary><div className="uc-advanced-grid"><label><span>API Key（仅本地使用）</span><input type="password" value={modelConfig?.apiKey ?? ""} onChange={(event) => setModelConfig({ apiKey: event.target.value, baseUrl: modelConfig?.baseUrl ?? "", model: modelConfig?.model ?? "" })} /></label><label><span>模型名称</span><input value={modelConfig?.model ?? ""} onChange={(event) => setModelConfig({ apiKey: modelConfig?.apiKey ?? "", baseUrl: modelConfig?.baseUrl ?? "", model: event.target.value })} /></label></div></details> : null}
       <div className="uc-stage-footer"><button className="uc-secondary-button" onClick={() => onStep("review")}><ArrowLeft size={15} />上一步：确认</button>{store.artifactResult ? <button className="uc-primary-button" onClick={() => onStep("refine")}><RefreshCw size={15} />继续修改</button> : null}</div>
     </div>
   );
@@ -379,7 +368,7 @@ function RefineStage({ store, onStep }: { store: WorkspaceState; onStep: (step: 
 
   async function makePatch() {
     if (!store.artifactKind || !text.trim()) return;
-    const response = await fetch("/api/workflow/build-patch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ instruction: text, artifactKind: store.artifactKind }) });
+    const response = await fetch("/api/workflow/build-patch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ instruction: text, projectId: store.projectId }) });
     const data = await response.json();
     if (response.ok) setPatch(data); else store.setError(data.error);
   }

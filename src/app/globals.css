@@ -1090,6 +1090,14 @@ html { background: var(--uc-paper); }
   font-weight: 700;
 }
 
+.uc-model-status-list { display: grid; gap: 10px; margin: 18px 0; }
+.uc-model-status-list > div { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; border: 1px solid var(--uc-border); padding: 12px; }
+.uc-model-status-list span { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; }
+.uc-model-status-list strong { font-size: 12px; }
+.uc-model-status-list strong.configured { color: #426c51; }
+.uc-model-status-list strong.missing { color: #9a5a3c; }
+.uc-model-status-list small { grid-column: 1 / -1; color: var(--uc-muted); overflow-wrap: anywhere; line-height: 1.6; }
+
 @media (max-width: 920px) {
   .uc-import-layout { grid-template-columns: 1fr; }
   .uc-import-notes { order: -1; }

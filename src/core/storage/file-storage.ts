@@ -3,7 +3,7 @@ import { mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promise
 import path from "node:path";
 import { artifactResultSchema, artifactSpecSchema, creationPackSchema } from "@/core/schemas";
 import { builtInPacks } from "@/core/pack-registry";
-import type { ArtifactResult, ArtifactSpec, CreationPack, ProjectRecord, RevisionRecord } from "@/types/universal";
+import type { ArtifactResult, ArtifactSpec, CreationPack, ModelRunRecord, ProjectRecord, RevisionRecord } from "@/types/universal";
 import type { StorageAdapter } from "@/core/storage";
 
 const dataRoot = path.join(process.cwd(), ".local-data");
@@ -24,6 +24,7 @@ async function writeJson(file: string, value: unknown) {
   await rename(temp, file);
 }
 function projectDir(id: string) { return path.join(projectRoot, safeId(id)); }
+function safeAssetName(value: string) { if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,120}$/.test(value)) throw new Error("非法资产文件名"); return value; }
 
 export class FileStorageAdapter implements StorageAdapter {
   async listPacks() {
@@ -43,8 +44,12 @@ export class FileStorageAdapter implements StorageAdapter {
   async getArtifactSpec(projectId: string) { const value = await readJson<unknown>(path.join(projectDir(projectId), "spec.json")); return value ? artifactSpecSchema.parse(value) as ArtifactSpec : null; }
   async saveArtifactResult(projectId: string, result: ArtifactResult) { const parsed = artifactResultSchema.parse(result) as ArtifactResult; await writeJson(path.join(projectDir(projectId), "outputs", "result.json"), parsed); }
   async getArtifactResult(projectId: string) { const value = await readJson<unknown>(path.join(projectDir(projectId), "outputs", "result.json")); return value ? artifactResultSchema.parse(value) as ArtifactResult : null; }
+  async saveAsset(projectId: string, fileName: string, data: Uint8Array) { const file = path.join(projectDir(projectId), "outputs", "assets", safeAssetName(fileName)); await mkdir(path.dirname(file), { recursive: true }); await writeFile(file, data); return file; }
+  async getAsset(projectId: string, fileName: string) { try { return await readFile(path.join(projectDir(projectId), "outputs", "assets", safeAssetName(fileName))); } catch { return null; } }
   async saveRevisions(projectId: string, revisions: RevisionRecord[]) { await writeJson(path.join(projectDir(projectId), "revisions.json"), revisions); }
   async getRevisions(projectId: string) { return (await readJson<RevisionRecord[]>(path.join(projectDir(projectId), "revisions.json"))) ?? []; }
+  async getModelRuns(projectId: string) { return (await readJson<ModelRunRecord[]>(path.join(projectDir(projectId), "model-runs.json"))) ?? []; }
+  async saveModelRun(projectId: string, run: ModelRunRecord) { const runs = await this.getModelRuns(projectId); const index = runs.findIndex((item) => item.id === run.id); if (index >= 0) runs[index] = run; else runs.push(run); await writeJson(path.join(projectDir(projectId), "model-runs.json"), runs); }
 }
 
 export const fileStorage = new FileStorageAdapter();
