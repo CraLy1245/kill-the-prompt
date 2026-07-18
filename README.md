@@ -14,13 +14,13 @@
   → 多方向探索
   → 用户做关键选择
   → ArtifactSpec
-  → 通用 AI 画布（人工拖拽/编辑 + AI CanvasAction）
+  → AI HTML 方案页（安全预览 + 自然语言修改）
   → 成果编译器
   → 图片 / Markdown / 安全 HTML 预览 / PRD
   → ArtifactSpec Patch 继续修改
 ```
 
-Prompt、系统指令、网页代码约束和文档结构都是内部编译结果。确认步骤以自适应 GUI 画布展示方案：对象会成为字段组，数组会成为标签或可增删列表，决策值会使用创作包中的真实标签和下拉框。用户可以拖拽、编辑、撤销，也可以用自然语言让分析模型自主插入、修改、移动、缩放或删除节点。执行模型会同时消费已确认的 `ArtifactSpec` 与画布语义，页面和编辑器都不再向用户暴露原始 JSON、内部 ID 或枚举值。
+Prompt、系统指令、网页代码约束和文档结构都是内部编译结果。确认步骤由分析模型直接生成完整 HTML 方案页，并在隔离的 iframe 中渲染；用户看到的是适配当前产品调性的真实页面，而不是 JSON、源码或固定模板。用户可切换桌面、平板和手机预览，用自然语言要求 AI 重排版式、突出重点或强化约束，也可撤销到上一版本。执行模型会同时消费已确认的 `ArtifactSpec` 与 HTML 方案页语义。
 
 ## 支持的四类成果
 
@@ -45,7 +45,7 @@ Prompt、系统指令、网页代码约束和文档结构都是内部编译结�
 
 - `types/universal.ts`：`ArtifactKind`、`CreationPack`、`ArtifactSpec`、`CanvasDocument`、`CanvasAction`、`ArtifactResult`、Patch 和项目类型。
 - `core/schemas.ts`：创作包、四类 ArtifactSpec、通用画布、四类 ArtifactResult 和 Patch 的独立 Zod Schema。
-- `core/canvas.ts` / `core/canvas-core.ts`：通用画布初始化、动作应用、边界约束与模型上下文摘要。
+- `core/canvas.ts` / `core/canvas-core.ts` / `core/canvas-html.ts`：HTML 方案页初始化、版本更新、安全校验与模型上下文摘要；旧画布语义节点继续保留用于兼容。
 - `core/flow-engine.ts`：动态步骤、流程顺序校验、回退和决策模块适用性。
 - `core/pack-registry/`：内置创作包注册中心。
 - `core/storage/`：`StorageAdapter` 与 `FileStorageAdapter`，业务层不直接散落使用 `fs`。
@@ -61,10 +61,10 @@ Prompt、系统指令、网页代码约束和文档结构都是内部编译结�
 
 通用画布 API：
 
-- `GET /api/canvas/:projectId`：读取画布；首次访问时根据任意 `ArtifactSpec` 生成通用语义节点，并把旧版序列化文本节点无损升级为结构化 GUI 数据。
-- `PUT /api/canvas/:projectId`：按 revision 应用受 Schema 约束的 `CanvasAction[]`。
+- `GET /api/canvas/:projectId`：读取 HTML 方案页；旧项目会先生成安全基础页，再由分析模型生成正式页面。
+- `PUT /api/canvas/:projectId`：保留给旧版语义节点动作的兼容接口。
 - `DELETE /api/canvas/:projectId`：撤销到上一个持久化版本。
-- `POST /api/canvas/:projectId/edit`：让分析模型根据自然语言生成并执行画布动作。
+- `POST /api/canvas/:projectId/edit`：让分析模型根据自然语言重写完整 HTML 页面，校验安全性后保存为新版本。
 
 ## 创作包格式
 
@@ -124,7 +124,9 @@ Prompt、系统指令、网页代码约束和文档结构都是内部编译结�
 
 `.local-data/` 已加入忽略规则，不会提交到 Git。相比把项目全塞进 `localStorage`，目录文件更容易备份、移动、导出和排查。
 
-## 网页预览安全说明
+## HTML 方案页与网页成果预览安全说明
+
+确认步骤的 AI HTML 方案页不显示或编辑源码。模型返回的 HTML 在服务端经过白名单式安全检查，禁止脚本、事件处理器、外部资源、网络请求、嵌套页面和动态代码执行；浏览器端再通过无权限 `sandbox` 与严格 CSP 双重隔离。方案页仅允许内联 CSS 和 `data:` 图片。
 
 网页成果不执行任意 React 或 Node.js 代码。预览流程是 `WebPageArtifactSpec → 内置 WebPageCompiler → HTML/CSS/有限 JS → iframe sandbox`。
 
@@ -159,7 +161,7 @@ npm run build
 - 五个内置创作包，包含 Logo 迁移包。
 - 本地项目目录存储、创作包注册/导入/导出 API、项目 API。
 - 统一首页和工作区：流程轨、动态方向、动态决策、ArtifactSpec 确认、成果预览、修改 Patch。
-- 通用 AI 画布：结构化 GUI 展示、业务字段编辑、决策下拉框、拖拽、撤销与自然语言 AI 编辑。
+- AI HTML 方案页：模型直接生成完整页面、安全 iframe 展示、桌面/平板/手机预览、版本撤销与自然语言 AI 重写。
 - Markdown、PRD JSON、HTML/CSS 导出。
 - 安全 iframe 网页预览和有限菜单交互。
 - 原 Logo 页面/API 路由保留，旧项目不会因为初版迁移被整体删除。

@@ -1,75 +1,66 @@
-# Design QA — 结构化 GUI 画布
+# Design QA — AI HTML 方案页
 
 ## Evidence
 
 - source visual truth path: `C:\Users\jiazh\AppData\Local\Temp\codex-clipboard-d4e49611-7248-4a66-8b3b-aaa7f596892c.png`
-- implementation screenshot path: `C:\Users\jiazh\AppData\Local\Temp\t002-structured-gui-desktop.png`
-- focused inspector screenshot path: `C:\Users\jiazh\AppData\Local\Temp\t002-structured-gui-inspector.png`
-- mobile screenshot path: `C:\Users\jiazh\AppData\Local\Temp\t002-structured-gui-mobile.png`
-- viewport: desktop `1600 × 1000`; mobile `390 × 844`
-- state: 知乎回答项目，步骤 05「确认」，画布版本 8，交互测试数据已通过撤销恢复
+- implementation screenshot path: `C:\Users\jiazh\AppData\Local\Temp\t002-ai-html-desktop.png`
+- mobile-frame screenshot path: `C:\Users\jiazh\AppData\Local\Temp\t002-ai-html-mobile-frame.png`
 - browser-rendered route: `http://127.0.0.1:3000/workspace/e4a72c96-153b-4737-ac35-96965986c59a`
+- viewport: desktop `1600 × 1000` capture（实际图像 `1585 × 991`，浏览器滚动条占用剩余像素）；HTML 手机框 `390px`
+- state: 知乎回答项目，步骤 05「确认」，AI HTML 版本 42，测试修改已通过撤销恢复
 
-源图来自 Windows 125% 显示缩放（文件为 2559 × 1347）。最终实现以用户当前 `1600 × 1000` 浏览器视口捕获；源图与实现图已放入同一视觉比较输入，比较重点是保持原有产品框架和视觉调性，并验证中央原始 JSON 区替换为 GUI 后的信息层级。
+源图为 `2559 × 1347`，来自 Windows 125% 显示缩放。源图和当前实现已在同一次视觉比较输入中打开；比较以相同的三栏工作区、确认步骤和真实项目内容为基准。当前实现有意把源图中央原始 JSON 区替换为渲染后的 HTML 方案页，其余产品框架保持一致。
 
 ## Full-view comparison evidence
 
-- Fonts and typography: 保留源图的宋体/衬线展示标题、紧凑无衬线工具文字和粗体紫色关键状态；GUI 使用业务标签、正文值和胶囊列表建立层级，没有等宽代码或 JSON 文本。
-- Spacing and layout rhythm: 左侧导航、中央流程、右侧摘要三栏结构与源图一致；中央原始 JSON 区被同位置的画布工具栏、结构化节点、AI 指令区和无代码检查器替换。卡片边界、细分隔线和小圆角延续现有系统。
-- Colors and tokens: 暖白纸张底色、梅紫主色、灰褐边框与低对比辅助文本均复用项目 token；没有新增渐变装饰或脱离产品调性的高饱和色。
-- Image quality and asset fidelity: 继续使用现有方向预览图与 Lucide 图标；没有以 CSS 图形、emoji、手写 SVG 或占位资产替代源图资产。源图中的桌面宠物为运行环境叠层，不属于产品资产。
-- Copy and content: 节点把内部字段转换为「创作意图」「目标读者」「必须避免」等业务文案；创作包字段 ID 和决策枚举会替换为中文标签，页面不显示 `core_judgment`、`ending-1` 等实现细节。
-- Responsiveness: 390px 视口下页面框架无横向溢出；流程轨与画布分别保留内部滚动，工具栏保持可操作，标题和主按钮没有相互覆盖。
+- Fonts and typography: 外层继续使用宋体/衬线展示标题和紧凑无衬线工具文字；HTML 页复用衬线大标题、梅紫眉题和克制正文层级。没有等宽源码、JSON 或 Schema 文本泄漏。
+- Spacing and layout rhythm: 左侧导航、中央流程与右侧摘要三栏比例延续参考图；HTML 页在原中央框内渲染，工具栏、预览区、自然语言编辑区和阶段按钮保持清晰分层。细边框、小圆角、低阴影与参考产品一致。
+- Colors and tokens: 暖白纸张、深墨正文、梅紫主色、灰褐分隔线均来自现有产品 token；AI 页没有引入脱离调性的高饱和色或通用蓝色 SaaS 风格。
+- Image quality and asset fidelity: 方向预览继续使用项目已有图片；图标统一来自 Lucide。参考图中的桌面宠物是运行环境叠层，不属于产品资产；实现没有用 emoji、手写 SVG、CSS 插画或占位图替代产品素材。
+- Copy and content: 固定文案清楚说明「AI HTML 方案页」「安全预览」「不需要接触源码」；动态页面以真实项目目标、方向、决策、成果结构和约束组织内容，不出现内部 ID。
+- Responsiveness: 桌面、平板和手机框按钮均可用；390px HTML 手机框内标题、摘要卡、列表和正文正常换行，无横向溢出或控件遮挡。
+- Icons and affordances: 预览尺寸、撤销、重新生成、执行修改均使用同一线性图标体系；激活尺寸有梅紫底色，按钮标签和 iframe title 可被辅助技术读取。
 
 ## Focused region comparison evidence
 
-中央确认区是唯一发生语义变化的区域。桌面全图呈现结构化节点与整体层级；聚焦截图单独验证「关键决策」节点对应三个带可访问名称的业务下拉框、保存按钮和 AI 编辑区；移动截图验证窄屏工具栏与画布容器。右侧摘要、流程轨和导航在全图中已足够辨认。
+不需要额外裁切：原始分辨率下的同屏比较已经能清楚辨认中央工具栏、HTML 首屏、右侧摘要和流程轨。另以手机框截图验证了最容易发生布局漂移的窄宽状态。
 
 ## Primary interactions tested
 
-1. 加载已有画布；GET 自动把旧版序列化文本节点升级为结构化数据，同时保留节点位置、尺寸和 revision。
-2. 选择「关键决策」节点，检查器展示「表达立场」「证据策略」「结尾方式」三个下拉框及真实选项标签。
-3. 将表达立场从「先给结论」改为「从经历切入」并保存；revision 从 6 增加到 7，节点和检查器同步更新。
-4. 点击撤销；revision 增加到 8，表达立场恢复为「先给结论」，测试改动未留在项目中。
-5. 检查 DOM 中不再出现 `core_judgment`、`target_readers`、`ending-1`，对应中文字段与决策标签可见。
-6. 检查 1600 × 1000 和 390 × 844 视口；控制台无 error/warn，框架错误叠层为空。
+1. 刷新已有项目，版本 42 的 AI HTML 直接恢复，没有重新触发模型或回退为基础模板。
+2. 桌面、平板、手机三个预览按钮均可切换，当前尺寸状态可见。
+3. 真实分析模型生成完整 HTML；自然语言要求「突出核心目标并调整发布场景/篇幅布局」后，页面重新排版并保存新版本。
+4. 点击撤销恢复上一版 HTML；测试修改未留在交付状态。
+5. 页面 DOM 中未出现 `core_judgment`、`ending-1`、`JSON` 或 `Schema`。
+6. iframe 使用空 `sandbox`、`no-referrer` 和注入 CSP；服务端安全校验覆盖脚本、事件处理器、外链和网络调用。
+7. 检查浏览器日志：0 error，0 warning；仅有 React DevTools 与 HMR 开发信息。
 
 ## Findings and comparison history
 
-### Iteration 1
+### Earlier canvas iterations
 
-- [P2] AI 可将节点移动到 1120px 画布横向边界之外。
-  - evidence: 真实模型将 450px 宽节点移动到 x≈1052，导致节点主体超出画布。
-  - fix: `canvas-core.ts` 对 insert/move/resize 统一钳制横向位置与宽度；模型指令同步声明 `x + width <= 1120`；新增边界测试。
-  - post-fix evidence: 单元测试验证 x=5000 和 width=1800 均被安全限制，画布内容不再产生页级横向溢出。
-
+- [P2] AI 节点曾可移动到画布横向边界之外。
+  - fix: 对旧版语义节点动作统一钳制横向位置与宽度，并补充边界测试。
+  - post-fix evidence: 边界测试通过；本次 HTML 页面以 iframe 内部滚动取代自由节点定位。
 - [P2] 确认步骤的 sticky 底部导航曾覆盖 AI 指令区。
-  - evidence: AI dock 为 y=945.75–1035.75，下一步按钮为 y=959–1001，存在重叠。
-  - fix: 仅在 `.uc-review-stage` 将阶段 footer 改为 static，保留其他步骤原有 sticky 行为。
-  - post-fix evidence: AI dock bottom=1035.75，下一步按钮 top=1121.75，`overlap=false`；移动端截图也显示两块区域完全分离。
+  - fix: 确认步骤 footer 改为静态流布局。
+  - post-fix evidence: 当前桌面截图中自然语言编辑区与阶段导航无重叠。
+- [P2] 结构化 GUI 曾暴露字段 ID 与决策枚举。
+  - fix: 先映射业务标签；本次进一步改为 AI 直接输出用户可读 HTML。
+  - post-fix evidence: DOM 检查内部标识、JSON 和 Schema 均不存在。
 
-### Iteration 2
+### AI HTML iteration
 
 - 未发现可执行的 P0/P1/P2 差异。
-- P3 follow-up: 超长分析文本仍以节点内滚动为主；后续可增加节点折叠与自动高度，但不影响当前编辑、AI 操作或生成流程。
-
-### Iteration 3 — 结构化 GUI
-
-- [P2] 首次 GUI 渲染仍在部分动态文案中暴露创作包字段 ID 与决策枚举。
-  - evidence: 需求分析节点可见 `core_judgment`、`target_readers`，约束文案可见 `ending-1`。
-  - fix: 将当前创作包输入字段标签和决策选项标签传入通用画布，在只读 GUI 与编辑器中统一替换独立标识符；底层 ArtifactSpec 保持不变。
-  - post-fix evidence: 浏览器 DOM 检查三个内部标识符均为 false，页面显示「核心判断」「目标读者」「回到判断标准」。
-
-- 未发现其他可执行的 P0/P1/P2 差异。
-- P3 follow-up: 超长方案节点继续采用节点内滚动；后续可增加折叠和局部搜索，不阻塞当前结构化查看和编辑。
+- P3 follow-up: 当前 AI 页面采用内部滚动以维持参考图的工作区高度；未来可增加「全屏查看」作为长方案阅读增强，不影响本次生成、修改、撤销或最终成果流程。
 
 ## Console and runtime
 
-- desktop console errors/warnings: 0
-- mobile console errors/warnings: 0
+- desktop console errors/warnings: 0 / 0
 - framework error overlay: none
 - blank-page check: passed
-- persistent page controls covered or clipped: none after iteration 2
+- persistent controls covered or clipped: none
+- HTML desktop/mobile-frame overflow: none
 
 ## Final result
 

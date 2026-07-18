@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { applyCanvasActionsCore, buildCanvasDocument, upgradeCanvasDocumentCore } from "../src/core/canvas-core.ts";
+import { assertSafeCanvasHtml, buildFallbackCanvasHtml } from "../src/core/canvas-html.ts";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const now = new Date().toISOString();
@@ -35,7 +36,7 @@ const writingSpec = {
   },
 };
 
-test("通用画布从 ArtifactSpec 生成可编辑的语义节点，而非固定写作模板", () => {
+test("通用画布从 ArtifactSpec 生成安全 HTML 方案页并保留语义节点", () => {
   const canvas = buildCanvasDocument(writingSpec);
   assert.equal(canvas.projectId, writingSpec.projectId);
   assert.ok(canvas.nodes.some((node) => node.id.startsWith("section-writing-")));
@@ -44,10 +45,16 @@ test("通用画布从 ArtifactSpec 生成可编辑的语义节点，而非固定
   const writingNode = canvas.nodes.find((node) => node.id.startsWith("section-writing-"));
   assert.deepEqual(writingNode.content.data, writingSpec.writing);
   assert.equal(writingNode.content.text, undefined);
+  assert.match(canvas.html, /<!doctype html>/i);
+  assert.match(canvas.html, /长期阅读习惯/);
+  assert.equal(canvas.htmlSource, "system");
+  assert.doesNotThrow(() => assertSafeCanvasHtml(canvas.html));
 });
 
-test("旧版序列化文本画布会无损升级为 GUI 结构化数据", () => {
+test("旧版节点画布会无损升级为 HTML 页面并保留已有布局", () => {
   const current = buildCanvasDocument(writingSpec);
+  delete current.html;
+  delete current.htmlSource;
   const writingIndex = current.nodes.findIndex((node) => node.id.startsWith("section-writing-"));
   current.nodes[writingIndex] = { ...current.nodes[writingIndex], content: { text: "topic：旧版文本" }, x: 333, y: 444 };
   const upgraded = upgradeCanvasDocumentCore(current, writingSpec);
@@ -56,6 +63,7 @@ test("旧版序列化文本画布会无损升级为 GUI 结构化数据", () => 
   assert.equal(upgraded.document.nodes[writingIndex].content.text, undefined);
   assert.equal(upgraded.document.nodes[writingIndex].x, 333);
   assert.equal(upgraded.document.nodes[writingIndex].y, 444);
+  assert.match(upgraded.document.html, /AI STRUCTURED PLAN/);
 });
 
 test("画布动作支持插入、编辑、移动、缩放和删除，并维护 revision", () => {
@@ -110,7 +118,7 @@ test("锁定节点不能被 AI 动作修改", () => {
   assert.throws(() => applyCanvasActionsCore(initial, [{ op: "move", id: initial.nodes[0].id, x: 20, y: 20 }]), /已锁定/);
 });
 
-test("确认步骤展示通用 AI 画布，生成端同时读取画布上下文", async () => {
+test("确认步骤渲染 AI HTML 页面，生成端同时读取画布上下文", async () => {
   const [workspace, execution, generation, model] = await Promise.all([
     read("src/components/universal/WorkspaceClient.tsx"),
     read("src/core/model-providers/execution-model.ts"),
@@ -121,12 +129,22 @@ test("确认步骤展示通用 AI 画布，生成端同时读取画布上下文"
   assert.equal(workspace.includes("uc-spec-preview"), false);
   assert.match(execution, /用户与 AI 已共同编辑并确认的通用画布/);
   assert.match(generation, /getCanvasDocument/);
-  assert.match(model, /CanvasAction/);
-  assert.match(model, /不得假设存在知乎、网页、PRD 或图片专用模板/);
+  assert.match(model, /CanvasHtmlEditResult/);
+  assert.match(model, /完整 HTML 页面/);
   const canvasUi = await read("src/components/universal/UniversalAiCanvas.tsx");
-  assert.match(canvasUi, /StructuredDataView/);
-  assert.match(canvasUi, /StructuredDataEditor/);
-  assert.equal(canvasUi.includes("JSON.stringify(node.content.data"), false);
+  assert.match(canvasUi, /uc-html-preview-frame/);
+  assert.match(canvasUi, /srcDoc=/);
+  assert.match(canvasUi, /sandbox=""/);
+  assert.match(canvasUi, /让 AI 修改这个 HTML 页面/);
+  assert.equal(canvasUi.includes("StructuredDataView"), false);
+});
+
+test("HTML 画布拒绝脚本、事件处理器与外部资源", () => {
+  const safe = buildFallbackCanvasHtml(writingSpec);
+  assert.doesNotThrow(() => assertSafeCanvasHtml(safe));
+  assert.throws(() => assertSafeCanvasHtml(safe.replace("</body>", "<script>alert(1)</script></body>")), /危险|脚本/);
+  assert.throws(() => assertSafeCanvasHtml(safe.replace("</body>", '<img src="https://example.com/a.png"></body>')), /危险|外部/);
+  assert.throws(() => assertSafeCanvasHtml(safe.replace("</body>", '<div onclick="alert(1)">x</div></body>')), /危险|脚本/);
 });
 
 test("画布图片拒绝外部 URL，避免模型绕过资源边界", async () => {

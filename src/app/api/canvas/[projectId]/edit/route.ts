@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { applyCanvasActions, createCanvasDocument, upgradeCanvasDocument } from "@/core/canvas";
-import { editCanvasWithModel } from "@/core/model-providers/canvas-model";
+import { applyCanvasHtmlEdit, createCanvasDocument, upgradeCanvasDocument } from "@/core/canvas";
+import { editCanvasHtmlWithModel } from "@/core/model-providers/canvas-model";
 import { getAnalysisModelConfig } from "@/core/model-providers/config";
 import { withModelRun } from "@/core/model-providers/model-run";
 import { fileStorage } from "@/core/storage/file-storage";
 
 type Params = { params: Promise<{ projectId: string }> };
-const requestSchema = z.object({ instruction: z.string().trim().min(2).max(2_000), baseRevision: z.number().int().min(0), selectedNodeIds: z.array(z.string()).max(20).optional() }).strict();
+const requestSchema = z.object({ instruction: z.string().trim().min(2).max(2_000), baseRevision: z.number().int().min(0) }).strict();
 export const maxDuration = 180;
 
 export async function POST(request: Request, { params }: Params) {
@@ -27,10 +27,10 @@ export async function POST(request: Request, { params }: Params) {
     }
     if (current.revision !== body.baseRevision) return NextResponse.json({ error: "画布版本已变化，请刷新后重试", document: current }, { status: 409 });
     const config = getAnalysisModelConfig();
-    const edit = await withModelRun({ projectId, role: "analysis", task: "canvas:edit", model: config.model }, () => editCanvasWithModel({ instruction: body.instruction, document: current, spec, selectedNodeIds: body.selectedNodeIds }));
-    const document = applyCanvasActions(current, edit.actions);
+    const edit = await withModelRun({ projectId, role: "analysis", task: "canvas:html-edit", model: config.model }, () => editCanvasHtmlWithModel({ instruction: body.instruction, document: current, spec }));
+    const document = applyCanvasHtmlEdit(current, edit);
     await fileStorage.saveCanvasDocument(projectId, document);
-    return NextResponse.json({ document, summary: edit.summary, actions: edit.actions });
+    return NextResponse.json({ document, summary: edit.summary });
   } catch (error) {
     const message = error instanceof Error ? error.message : "AI 无法完成画布编辑";
     return NextResponse.json({ error: message }, { status: /未配置/.test(message) ? 503 : 502 });

@@ -24,7 +24,7 @@ export const imageArtifactCompiler: ArtifactCompiler<ImageArtifactSpec, Extract<
       `比例：${image.aspectRatio}`,
       image.requiredText.length ? `必须出现文字：${list(image.requiredText)}` : "",
       spec.constraints.mustInclude.length ? `必须保留：${list(spec.constraints.mustInclude)}` : "",
-      context.canvas ? `画布补充意图：${context.canvas.nodes.map((node) => [node.title, node.content.text, node.content.items?.join("、")].filter(Boolean).join("：")).filter(Boolean).join("；").slice(0, 4_000)}` : "",
+      context.canvas ? `画布补充意图：${canvasText(context.canvas).slice(0, 4_000)}` : "",
     ].filter(Boolean).join("\n");
     const negativeInstruction = list([...spec.constraints.mustAvoid, ...image.identityLocks]);
     if (!context.requestImage) throw new Error("执行模型图片驱动未配置");
@@ -59,3 +59,8 @@ export const productFeatureArtifactCompiler: ArtifactCompiler<ProductFeatureArti
 };
 
 export const compilerList = [imageArtifactCompiler, writingArtifactCompiler, webPageArtifactCompiler, productFeatureArtifactCompiler];
+
+function canvasText(canvas: { html?: string; nodes: Array<{ title?: string; content: { text?: string; items?: string[] } }> }) {
+  if (canvas.html) return canvas.html.replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return canvas.nodes.map((node) => [node.title, node.content.text, node.content.items?.join("、")].filter(Boolean).join("：")).filter(Boolean).join("；");
+}

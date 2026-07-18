@@ -1,4 +1,5 @@
 import type { ArtifactSpec, CanvasAction, CanvasDocument, CanvasNode } from "@/types/universal";
+import { buildFallbackCanvasHtml } from "./canvas-html.ts";
 
 export const CANVAS_WORLD_WIDTH = 1120;
 
@@ -55,13 +56,13 @@ export function buildCanvasDocument(spec: ArtifactSpec): CanvasDocument {
     });
   });
 
-  return { schemaVersion: "1.0", projectId: spec.projectId, nodes, revision: 0, createdAt: now, updatedAt: now };
+  return { schemaVersion: "1.0", projectId: spec.projectId, nodes, html: buildFallbackCanvasHtml(spec), htmlSource: "system", htmlSummary: "根据结构化方案生成的基础页面", revision: 0, createdAt: now, updatedAt: now };
 }
 
 export function upgradeCanvasDocumentCore(document: CanvasDocument, spec: ArtifactSpec) {
   const fresh = buildCanvasDocument(spec);
   const freshById = new Map(fresh.nodes.map((node) => [node.id, node]));
-  let changed = false;
+  let changed = !document.html;
   const nodes = document.nodes.map((node) => {
     const replacement = freshById.get(node.id);
     if (!replacement || replacement.content.data === undefined || node.content.data !== undefined) return node;
@@ -69,7 +70,7 @@ export function upgradeCanvasDocumentCore(document: CanvasDocument, spec: Artifa
     return { ...node, type: replacement.type, title: replacement.title, content: replacement.content };
   });
   return changed
-    ? { document: { ...document, nodes, updatedAt: new Date().toISOString() }, changed: true as const }
+    ? { document: { ...document, nodes, html: document.html ?? fresh.html, htmlSource: document.htmlSource ?? "system", htmlSummary: document.htmlSummary ?? "已升级为 HTML 方案页", updatedAt: new Date().toISOString() }, changed: true as const }
     : { document, changed: false as const };
 }
 

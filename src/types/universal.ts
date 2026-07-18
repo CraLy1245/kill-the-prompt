@@ -244,6 +244,9 @@ export type CanvasDocument = {
   schemaVersion: "1.0";
   projectId: string;
   nodes: CanvasNode[];
+  html?: string;
+  htmlSource?: "system" | "ai";
+  htmlSummary?: string;
   revision: number;
   createdAt: string;
   updatedAt: string;
@@ -257,6 +260,7 @@ export type CanvasAction =
   | { op: "remove"; id: string };
 
 export type CanvasEditResult = { summary: string; actions: CanvasAction[] };
+export type CanvasHtmlEditResult = { summary: string; html: string };
 
 export type ImageArtifactResult = {
   artifactKind: "image";

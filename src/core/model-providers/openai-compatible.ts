@@ -14,6 +14,14 @@ type StructuredCall<T> = {
   temperature?: number;
 };
 
+type TextCall = {
+  config: ServerModelConfig;
+  task: string;
+  system: string;
+  prompt: string;
+  temperature?: number;
+};
+
 export async function callStructuredModel<T>(params: StructuredCall<T>): Promise<T> {
   assertModelConfigured(params.config);
   const first = await requestCompletion(params.config, params.task, params.system, params.prompt, params.temperature ?? 0.15);
@@ -32,6 +40,11 @@ export async function callStructuredModel<T>(params: StructuredCall<T>): Promise
   const repairedParsed = parseStructured(params.schema, repaired, params.normalize);
   if (repairedParsed.success) return repairedParsed.data;
   throw new ModelOutputError(`${getRoleLabel(params.config.role)}返回格式无效：${repairedParsed.error}`);
+}
+
+export async function callTextModel(params: TextCall) {
+  assertModelConfigured(params.config);
+  return requestCompletion(params.config, params.task, params.system, params.prompt, params.temperature ?? 0.15);
 }
 
 async function requestCompletion(config: ServerModelConfig, task: string, system: string, prompt: string, temperature: number) {
