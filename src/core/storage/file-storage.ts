@@ -1,9 +1,9 @@
 import "server-only";
 import { mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { artifactResultSchema, artifactSpecSchema, creationPackSchema } from "@/core/schemas";
+import { artifactResultSchema, artifactSpecSchema, canvasDocumentSchema, creationPackSchema } from "@/core/schemas";
 import { builtInPacks } from "@/core/pack-registry";
-import type { ArtifactResult, ArtifactSpec, CreationPack, ModelRunRecord, ProjectRecord, RevisionRecord } from "@/types/universal";
+import type { ArtifactResult, ArtifactSpec, CanvasDocument, CreationPack, ModelRunRecord, ProjectRecord, RevisionRecord } from "@/types/universal";
 import type { StorageAdapter } from "@/core/storage";
 
 const dataRoot = path.join(process.cwd(), ".local-data");
@@ -42,6 +42,32 @@ export class FileStorageAdapter implements StorageAdapter {
   async deleteProject(id: string) { await rm(projectDir(id), { recursive: true, force: true }); }
   async saveArtifactSpec(projectId: string, spec: ArtifactSpec) { const parsed = artifactSpecSchema.parse(spec) as ArtifactSpec; await writeJson(path.join(projectDir(projectId), "spec.json"), parsed); }
   async getArtifactSpec(projectId: string) { const value = await readJson<unknown>(path.join(projectDir(projectId), "spec.json")); return value ? artifactSpecSchema.parse(value) as ArtifactSpec : null; }
+  async saveCanvasDocument(projectId: string, document: CanvasDocument, recordHistory = true) {
+    const parsed = canvasDocumentSchema.parse(document) as CanvasDocument;
+    if (parsed.projectId !== projectId) throw new Error("画布与项目不匹配");
+    const current = recordHistory ? await this.getCanvasDocument(projectId) : null;
+    if (current) {
+      const history = (await readJson<CanvasDocument[]>(path.join(projectDir(projectId), "canvas-history.json"))) ?? [];
+      history.push(current);
+      await writeJson(path.join(projectDir(projectId), "canvas-history.json"), history.slice(-20));
+    }
+    await writeJson(path.join(projectDir(projectId), "canvas.json"), parsed);
+  }
+  async getCanvasDocument(projectId: string) {
+    const value = await readJson<unknown>(path.join(projectDir(projectId), "canvas.json"));
+    return value ? canvasDocumentSchema.parse(value) as CanvasDocument : null;
+  }
+  async undoCanvasDocument(projectId: string) {
+    const file = path.join(projectDir(projectId), "canvas-history.json");
+    const history = (await readJson<CanvasDocument[]>(file)) ?? [];
+    const previous = history.pop();
+    if (!previous) return null;
+    const current = await this.getCanvasDocument(projectId);
+    const restored = canvasDocumentSchema.parse({ ...previous, revision: (current?.revision ?? previous.revision) + 1, updatedAt: new Date().toISOString() }) as CanvasDocument;
+    await writeJson(path.join(projectDir(projectId), "canvas.json"), restored);
+    await writeJson(file, history);
+    return restored;
+  }
   async saveArtifactResult(projectId: string, result: ArtifactResult) { const parsed = artifactResultSchema.parse(result) as ArtifactResult; await writeJson(path.join(projectDir(projectId), "outputs", "result.json"), parsed); }
   async getArtifactResult(projectId: string) { const value = await readJson<unknown>(path.join(projectDir(projectId), "outputs", "result.json")); return value ? artifactResultSchema.parse(value) as ArtifactResult : null; }
   async saveAsset(projectId: string, fileName: string, data: Uint8Array) { const file = path.join(projectDir(projectId), "outputs", "assets", safeAssetName(fileName)); await mkdir(path.dirname(file), { recursive: true }); await writeFile(file, data); return file; }

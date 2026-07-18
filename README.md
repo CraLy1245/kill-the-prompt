@@ -14,12 +14,13 @@
   → 多方向探索
   → 用户做关键选择
   → ArtifactSpec
+  → 通用 AI 画布（人工拖拽/编辑 + AI CanvasAction）
   → 成果编译器
   → 图片 / Markdown / 安全 HTML 预览 / PRD
   → ArtifactSpec Patch 继续修改
 ```
 
-Prompt、系统指令、网页代码约束和文档结构都是内部编译结果。工作区默认只展示结构化方案和成果，高级模式才展示生成参数。
+Prompt、系统指令、网页代码约束和文档结构都是内部编译结果。确认步骤以通用节点画布展示方案：用户可以拖拽、编辑、撤销，也可以用自然语言让分析模型自主插入、修改、移动、缩放或删除节点。执行模型会同时消费已确认的 `ArtifactSpec` 与画布语义，不再向用户暴露原始 JSON。
 
 ## 支持的四类成果
 
@@ -42,8 +43,9 @@ Prompt、系统指令、网页代码约束和文档结构都是内部编译结�
 
 核心层位于 `src/core/`：
 
-- `types/universal.ts`：`ArtifactKind`、`CreationPack`、`ArtifactSpec`、`ArtifactResult`、Patch 和项目类型。
-- `core/schemas.ts`：创作包、四类 ArtifactSpec、四类 ArtifactResult 和 Patch 的独立 Zod Schema。
+- `types/universal.ts`：`ArtifactKind`、`CreationPack`、`ArtifactSpec`、`CanvasDocument`、`CanvasAction`、`ArtifactResult`、Patch 和项目类型。
+- `core/schemas.ts`：创作包、四类 ArtifactSpec、通用画布、四类 ArtifactResult 和 Patch 的独立 Zod Schema。
+- `core/canvas.ts` / `core/canvas-core.ts`：通用画布初始化、动作应用、边界约束与模型上下文摘要。
 - `core/flow-engine.ts`：动态步骤、流程顺序校验、回退和决策模块适用性。
 - `core/pack-registry/`：内置创作包注册中心。
 - `core/storage/`：`StorageAdapter` 与 `FileStorageAdapter`，业务层不直接散落使用 `fs`。
@@ -56,6 +58,13 @@ Prompt、系统指令、网页代码约束和文档结构都是内部编译结�
 - `src/components/universal/`：工作区、动态字段、成果预览和安全 iframe。
 - `src/store/useWorkspaceStore.ts`：统一工作区状态，替代新流程对 `useLogoFlowStore` 的依赖。
 - `src/packs/built-in/*.json`：声明式 JSON 创作包。
+
+通用画布 API：
+
+- `GET /api/canvas/:projectId`：读取画布；首次访问时根据任意 `ArtifactSpec` 生成通用语义节点。
+- `PUT /api/canvas/:projectId`：按 revision 应用受 Schema 约束的 `CanvasAction[]`。
+- `DELETE /api/canvas/:projectId`：撤销到上一个持久化版本。
+- `POST /api/canvas/:projectId/edit`：让分析模型根据自然语言生成并执行画布动作。
 
 ## 创作包格式
 

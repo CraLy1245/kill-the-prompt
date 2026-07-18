@@ -1136,6 +1136,82 @@ html { background: var(--uc-paper); }
 .uc-text-button { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; border: 0; background: transparent; color: var(--uc-muted); cursor: pointer; font-size: 12px; }
 .uc-text-button.danger:hover { color: #9a4f3c; }
 
+.uc-ai-canvas { margin-top: 22px; overflow: hidden; border: 1px solid var(--uc-line); border-radius: 7px; background: var(--uc-surface); }
+.uc-canvas-loading { display: flex; min-height: 430px; align-items: center; justify-content: center; gap: 10px; border: 1px solid var(--uc-line); background: #f5f1ed; color: var(--uc-muted); font-size: 12px; }
+.uc-canvas-loading.error { color: #8f4f35; }
+.uc-canvas-toolbar { display: flex; min-height: 58px; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--uc-line); padding: 9px 12px; background: #fffdf9; }
+.uc-canvas-toolbar > div, .uc-canvas-tools, .uc-canvas-zoom { display: flex; align-items: center; gap: 8px; }
+.uc-canvas-mark { display: grid; width: 31px; height: 31px; place-items: center; border-radius: 50%; background: var(--uc-plum); color: #fff; }
+.uc-canvas-toolbar strong, .uc-canvas-toolbar small { display: block; }
+.uc-canvas-toolbar strong { font-family: var(--uc-display); font-size: 13px; }
+.uc-canvas-toolbar small { margin-top: 2px; color: var(--uc-muted); font-size: 8px; }
+.uc-canvas-tools > button, .uc-canvas-zoom button { display: inline-flex; min-height: 31px; align-items: center; justify-content: center; gap: 5px; border: 1px solid var(--uc-line); border-radius: 4px; background: #fffdf9; color: var(--uc-ink); padding: 0 9px; cursor: pointer; font-size: 9px; font-weight: 750; }
+.uc-canvas-tools > button:hover:not(:disabled), .uc-canvas-zoom button:hover { border-color: var(--uc-plum); color: var(--uc-plum); }
+.uc-canvas-tools button:disabled { cursor: not-allowed; opacity: .45; }
+.uc-canvas-zoom { gap: 0; border: 1px solid var(--uc-line); border-radius: 4px; }
+.uc-canvas-zoom button { width: 29px; border: 0; padding: 0; }
+.uc-canvas-zoom b { min-width: 43px; color: var(--uc-muted); font-size: 8px; text-align: center; }
+.uc-canvas-viewport { height: 555px; overflow: auto; overscroll-behavior: contain; background: #f1ede9; scrollbar-color: #b9aeb6 transparent; scrollbar-width: thin; }
+.uc-canvas-scaled { position: relative; min-width: 100%; }
+.uc-canvas-world { position: absolute; top: 0; left: 0; transform-origin: top left; background: #f6f2ee; }
+.uc-canvas-node { position: absolute; overflow: hidden; border: 1px solid var(--uc-line); background: #fffdf9; box-shadow: 0 5px 14px rgba(45, 33, 48, .055); touch-action: none; user-select: none; }
+.uc-canvas-node.selected { border-color: var(--uc-plum) !important; box-shadow: 0 0 0 2px rgba(87, 20, 108, .14), 0 8px 22px rgba(45, 33, 48, .1); }
+.uc-canvas-node.type-text { border-style: dashed; }
+.uc-canvas-node.type-note { border-left-width: 4px; }
+.uc-canvas-node.type-code { background: #2b2230 !important; color: #f6edf8 !important; }
+.uc-canvas-node-handle { display: flex; height: 31px; align-items: center; gap: 6px; border-bottom: 1px solid color-mix(in srgb, currentColor 10%, transparent); padding: 0 10px; cursor: grab; color: inherit; font-size: 9px; font-weight: 800; letter-spacing: .035em; }
+.uc-canvas-node-handle:active { cursor: grabbing; }
+.uc-canvas-node-content { height: calc(100% - 31px); overflow: auto; padding: 11px 13px; scrollbar-width: thin; }
+.uc-canvas-node-content p, .uc-canvas-node-content pre { margin: 0; color: inherit; font: inherit; line-height: 1.58; white-space: pre-wrap; }
+.uc-canvas-node-content ul { display: grid; gap: 7px; margin: 0; padding-left: 18px; font-size: max(10px, .72em); line-height: 1.45; }
+.uc-canvas-node-content img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.uc-canvas-ai-dock { display: grid; grid-template-columns: auto minmax(120px, .7fr) minmax(220px, 1.8fr) auto; align-items: center; gap: 10px; border-top: 1px solid var(--uc-line); padding: 11px 12px; background: #fffdf9; }
+.uc-canvas-ai-dock > span { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--uc-plum); border-radius: 50%; color: var(--uc-plum); }
+.uc-canvas-ai-dock strong, .uc-canvas-ai-dock small { display: block; }
+.uc-canvas-ai-dock strong { font-family: var(--uc-display); font-size: 11px; }
+.uc-canvas-ai-dock small { margin-top: 3px; overflow: hidden; color: var(--uc-muted); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.uc-canvas-ai-dock textarea { width: 100%; min-height: 45px; max-height: 96px; resize: vertical; border: 1px solid var(--uc-line); border-radius: 5px; background: #f8f4f1; padding: 9px 11px; color: var(--uc-ink); font: 10px/1.45 var(--uc-sans); outline: 0; }
+.uc-canvas-ai-dock textarea:focus { border-color: var(--uc-plum); box-shadow: 0 0 0 3px rgba(87, 20, 108, .08); }
+.uc-canvas-ai-dock .uc-primary-button { min-height: 40px; white-space: nowrap; }
+.uc-canvas-presets { display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px solid var(--uc-line); padding: 8px 12px; background: #f8f4f1; }
+.uc-canvas-presets button { min-height: 28px; border: 1px solid #d9cfd8; border-radius: 999px; background: transparent; color: var(--uc-plum); padding: 0 10px; cursor: pointer; font-size: 8px; font-weight: 750; }
+.uc-canvas-presets button:hover { border-color: var(--uc-plum); background: var(--uc-plum-soft); }
+.uc-canvas-inspector { display: grid; grid-template-columns: 150px minmax(130px, .65fr) minmax(220px, 1.35fr) auto; align-items: end; gap: 10px; border-top: 1px solid var(--uc-line); padding: 11px 12px; background: #fffdf9; }
+.uc-canvas-inspector > div:first-child { align-self: center; }
+.uc-canvas-inspector > div:first-child strong, .uc-canvas-inspector > div:first-child span { display: block; }
+.uc-canvas-inspector > div:first-child strong { margin-top: 5px; font-family: var(--uc-display); font-size: 11px; }
+.uc-canvas-inspector > div:first-child span { margin-top: 2px; overflow: hidden; color: var(--uc-muted); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.uc-canvas-inspector label { display: grid; gap: 4px; color: var(--uc-muted); font-size: 8px; }
+.uc-canvas-inspector input, .uc-canvas-inspector textarea { width: 100%; border: 1px solid var(--uc-line); border-radius: 4px; background: #faf7f3; color: var(--uc-ink); padding: 8px; font: 10px/1.4 var(--uc-sans); outline: 0; }
+.uc-canvas-inspector input { height: 37px; }
+.uc-canvas-inspector textarea { height: 54px; resize: vertical; }
+.uc-canvas-inspector-actions { display: flex; align-items: center; gap: 6px; }
+.uc-canvas-inspector-actions .uc-secondary-button { min-height: 37px; white-space: nowrap; }
+.uc-canvas-message { display: flex; align-items: center; gap: 6px; border-top: 1px solid; padding: 8px 12px; font-size: 9px; }
+.uc-canvas-message.success { border-color: #cfe1d3; background: #f2f8f3; color: #426c51; }
+.uc-canvas-message.error { border-color: #ead1c6; background: #fff7f3; color: #8f4f35; }
+.uc-review-stage .uc-stage-footer { position: static; }
+
+@media (max-width: 900px) {
+  .uc-canvas-ai-dock { grid-template-columns: auto 1fr auto; }
+  .uc-canvas-ai-dock textarea { grid-column: 1 / -1; grid-row: 2; }
+  .uc-canvas-ai-dock .uc-primary-button { grid-column: 3; grid-row: 1; }
+  .uc-canvas-inspector { grid-template-columns: 1fr 1fr; }
+  .uc-canvas-inspector > div:first-child, .uc-canvas-inspector .wide { grid-column: 1 / -1; }
+  .uc-canvas-inspector-actions { justify-content: flex-end; }
+}
+
+@media (max-width: 600px) {
+  .uc-canvas-toolbar { align-items: flex-start; flex-direction: column; }
+  .uc-canvas-tools { width: 100%; overflow-x: auto; }
+  .uc-canvas-viewport { height: 500px; }
+  .uc-canvas-ai-dock { grid-template-columns: auto 1fr; }
+  .uc-canvas-ai-dock .uc-primary-button { grid-column: 1 / -1; grid-row: 3; width: 100%; }
+  .uc-canvas-inspector { grid-template-columns: 1fr; }
+  .uc-canvas-inspector > div:first-child, .uc-canvas-inspector .wide { grid-column: auto; }
+  .uc-canvas-inspector-actions { justify-content: space-between; }
+}
+
 @media (max-width: 470px) {
   .uc-model-form-card { min-height: auto; }
   .uc-model-form-actions { align-items: stretch; flex-direction: column-reverse; }

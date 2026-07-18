@@ -2,7 +2,7 @@ import "server-only";
 import { productFeatureArtifactResultSchema, webPageArtifactResultSchema, writingArtifactResultSchema } from "@/core/schemas";
 import { assertModelConfigured, getExecutionImageConfig, getExecutionModelConfig } from "@/core/model-providers/config";
 import { callStructuredModel, ModelOutputError, ModelRequestError } from "@/core/model-providers/openai-compatible";
-import type { ArtifactResult, ArtifactSpec } from "@/types/universal";
+import type { ArtifactResult, ArtifactSpec, CanvasDocument } from "@/types/universal";
 
 const system = [
   "你是创作工作流中的执行模型。",
@@ -12,7 +12,7 @@ const system = [
   "只能输出一个 JSON 对象，不得输出 JSON 之外的文字或 Markdown 代码围栏。",
 ].join("\n");
 
-export async function executeArtifactWithModel(spec: ArtifactSpec): Promise<ArtifactResult> {
+export async function executeArtifactWithModel(spec: ArtifactSpec, canvas?: CanvasDocument): Promise<ArtifactResult> {
   if (spec.artifactKind === "image") throw new Error("图片成果应通过图片执行驱动生成");
   const outputContract = spec.artifactKind === "writing"
     ? "{ artifactKind: 'writing', title: string, markdown: string, outline: string[] }。markdown 必须是完整可发布正文，不是大纲。"
@@ -24,6 +24,8 @@ export async function executeArtifactWithModel(spec: ArtifactSpec): Promise<Arti
     `输出合同：${outputContract}`,
     "ArtifactSpec：",
     JSON.stringify(spec),
+    canvas ? "用户与 AI 已共同编辑并确认的通用画布。画布是最新的内容组织与表达意图，执行时必须落实；若与 ArtifactSpec 约束冲突，仍以约束为准：" : "",
+    canvas ? JSON.stringify(canvas) : "",
   ].join("\n\n");
   const config = getExecutionModelConfig();
   const result: ArtifactResult = spec.artifactKind === "writing"

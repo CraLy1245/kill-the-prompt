@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ArtifactSpec, ArtifactResult } from "@/types/universal";
+import type { ArtifactSpec, ArtifactResult, CanvasDocument } from "@/types/universal";
 
 const id = z.string().regex(/^[a-z][a-zA-Z0-9_]{1,40}$/, "字段 ID 必须符合 /^[a-z][a-zA-Z0-9_]{1,40}$/");
 const nonEmpty = z.string().trim().min(1);
@@ -156,6 +156,72 @@ export const productFeatureArtifactSpecSchema = baseArtifactSpecSchema.extend({
 
 export const artifactSpecSchema = z.discriminatedUnion("artifactKind", [imageArtifactSpecSchema, writingArtifactSpecSchema, webPageArtifactSpecSchema, productFeatureArtifactSpecSchema]);
 
+const canvasNodeStyleSchema = z.object({
+  background: z.string().max(80).optional(),
+  color: z.string().max(80).optional(),
+  borderColor: z.string().max(80).optional(),
+  fontSize: z.number().min(9).max(72).optional(),
+  fontWeight: z.enum(["regular", "medium", "semibold", "bold"]).optional(),
+  textAlign: z.enum(["left", "center", "right"]).optional(),
+  radius: z.number().min(0).max(36).optional(),
+}).strict();
+
+export const canvasNodeSchema = z.object({
+  id: z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,80}$/),
+  type: z.enum(["frame", "text", "card", "list", "image", "table", "code", "note"]),
+  title: z.string().trim().max(160).optional(),
+  content: z.object({
+    text: z.string().max(20_000).optional(),
+    items: z.array(z.string().max(2_000)).max(100).optional(),
+    src: z.string().regex(/^(?:\/(?!\/)(?!.*(?:^|\/)\.\.(?:\/|$))|data:image\/(?:png|jpeg|webp|gif);base64,)/, "画布图片只能使用安全的本地路径或内嵌位图").max(4_000).optional(),
+    alt: z.string().max(500).optional(),
+    data: z.unknown().optional(),
+  }).strict(),
+  x: z.number().min(0).max(5_000),
+  y: z.number().min(0).max(5_000),
+  width: z.number().min(120).max(2_400),
+  height: z.number().min(56).max(2_400),
+  zIndex: z.number().int().min(0).max(1_000),
+  parentId: z.string().optional(),
+  locked: z.boolean().optional(),
+  style: canvasNodeStyleSchema,
+}).strict();
+
+export const canvasDocumentSchema = z.object({
+  schemaVersion: z.literal("1.0"),
+  projectId: nonEmpty,
+  nodes: z.array(canvasNodeSchema).min(1).max(120),
+  revision: z.number().int().min(0),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+}).strict().superRefine((document, ctx) => {
+  const ids = document.nodes.map((node) => node.id);
+  if (new Set(ids).size !== ids.length) ctx.addIssue({ code: "custom", path: ["nodes"], message: "画布节点 ID 不得重复" });
+  const idSet = new Set(ids);
+  for (const [index, node] of document.nodes.entries()) {
+    if (node.parentId && !idSet.has(node.parentId)) ctx.addIssue({ code: "custom", path: ["nodes", index, "parentId"], message: "父节点不存在" });
+    if (node.parentId === node.id) ctx.addIssue({ code: "custom", path: ["nodes", index, "parentId"], message: "节点不能成为自己的父节点" });
+  }
+});
+
+const canvasUpdateChangesSchema = z.object({
+  title: z.string().trim().max(160).optional(),
+  content: canvasNodeSchema.shape.content.optional(),
+  style: canvasNodeStyleSchema.optional(),
+  parentId: z.string().optional(),
+  zIndex: z.number().int().min(0).max(1_000).optional(),
+}).strict();
+
+export const canvasActionSchema = z.discriminatedUnion("op", [
+  z.object({ op: z.literal("insert"), node: canvasNodeSchema }).strict(),
+  z.object({ op: z.literal("update"), id: nonEmpty, changes: canvasUpdateChangesSchema }).strict(),
+  z.object({ op: z.literal("move"), id: nonEmpty, x: z.number().min(0).max(5_000), y: z.number().min(0).max(5_000) }).strict(),
+  z.object({ op: z.literal("resize"), id: nonEmpty, width: z.number().min(120).max(2_400), height: z.number().min(56).max(2_400) }).strict(),
+  z.object({ op: z.literal("remove"), id: nonEmpty }).strict(),
+]);
+
+export const canvasActionListSchema = z.object({ summary: nonEmpty, actions: z.array(canvasActionSchema).min(1).max(40) }).strict();
+
 export const artifactSpecPatchSchema = z.object({
   reason: nonEmpty,
   operations: z.array(z.object({ op: z.enum(["replace", "add", "remove"]), path: z.string().regex(/^\/[a-zA-Z0-9_/-]+$/), value: z.unknown().optional() })).min(1),
@@ -173,4 +239,8 @@ export function parseArtifactSpec(value: unknown): ArtifactSpec {
 
 export function parseArtifactResult(value: unknown): ArtifactResult {
   return artifactResultSchema.parse(value) as ArtifactResult;
+}
+
+export function parseCanvasDocument(value: unknown): CanvasDocument {
+  return canvasDocumentSchema.parse(value) as CanvasDocument;
 }

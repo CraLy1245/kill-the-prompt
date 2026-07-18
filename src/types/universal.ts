@@ -213,6 +213,51 @@ export type ProductFeatureArtifactSpec = BaseArtifactSpec & {
 
 export type ArtifactSpec = ImageArtifactSpec | WritingArtifactSpec | WebPageArtifactSpec | ProductFeatureArtifactSpec;
 
+export type CanvasNodeType = "frame" | "text" | "card" | "list" | "image" | "table" | "code" | "note";
+
+export type CanvasNodeStyle = {
+  background?: string;
+  color?: string;
+  borderColor?: string;
+  fontSize?: number;
+  fontWeight?: "regular" | "medium" | "semibold" | "bold";
+  textAlign?: "left" | "center" | "right";
+  radius?: number;
+};
+
+export type CanvasNode = {
+  id: string;
+  type: CanvasNodeType;
+  title?: string;
+  content: { text?: string; items?: string[]; src?: string; alt?: string; data?: unknown };
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  zIndex: number;
+  parentId?: string;
+  locked?: boolean;
+  style: CanvasNodeStyle;
+};
+
+export type CanvasDocument = {
+  schemaVersion: "1.0";
+  projectId: string;
+  nodes: CanvasNode[];
+  revision: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CanvasAction =
+  | { op: "insert"; node: CanvasNode }
+  | { op: "update"; id: string; changes: Pick<Partial<CanvasNode>, "title" | "content" | "style" | "parentId" | "zIndex"> }
+  | { op: "move"; id: string; x: number; y: number }
+  | { op: "resize"; id: string; width: number; height: number }
+  | { op: "remove"; id: string };
+
+export type CanvasEditResult = { summary: string; actions: CanvasAction[] };
+
 export type ImageArtifactResult = {
   artifactKind: "image";
   images: Array<{ id: string; url: string; localPath?: string }>;
@@ -272,6 +317,7 @@ export type ProjectRecord = {
 export type CompilerContext = {
   projectId: string;
   now: string;
+  canvas?: CanvasDocument;
   requestImage?: (prompt: string, negativePrompt?: string) => Promise<{ url: string }>;
   requestArtifact?: (spec: ArtifactSpec) => Promise<ArtifactResult>;
 };

@@ -21,10 +21,12 @@ export async function POST(request: Request) {
     if (!persistedSpec || persistedSpec.updatedAt !== spec.updatedAt) return NextResponse.json({ error: "方案版本已变化，请刷新后重新生成" }, { status: 409 });
     const compiler = compilerList.find((item) => item.artifactKind === spec.artifactKind);
     if (!compiler) return NextResponse.json({ error: "成果编译器未注册" }, { status: 500 });
+    const canvas = await fileStorage.getCanvasDocument(spec.projectId);
     const context: CompilerContext = {
       projectId: spec.projectId,
       now: new Date().toISOString(),
-      requestArtifact: executeArtifactWithModel,
+      canvas: canvas ?? undefined,
+      requestArtifact: (value) => executeArtifactWithModel(value, canvas ?? undefined),
       requestImage: requestExecutionImage,
     };
     const model = spec.artifactKind === "image" ? getExecutionImageConfig().model : getExecutionModelConfig().model;

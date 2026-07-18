@@ -1,4 +1,4 @@
-import type { ArtifactResult, ArtifactSpec, CreationPack, ProjectRecord, RevisionRecord } from "@/types/universal";
+import type { ArtifactResult, ArtifactSpec, CanvasDocument, CreationPack, ProjectRecord, RevisionRecord } from "@/types/universal";
 
 export interface StorageAdapter {
   listPacks(): Promise<CreationPack[]>;
@@ -11,6 +11,9 @@ export interface StorageAdapter {
   deleteProject(id: string): Promise<void>;
   saveArtifactSpec(projectId: string, spec: ArtifactSpec): Promise<void>;
   getArtifactSpec(projectId: string): Promise<ArtifactSpec | null>;
+  saveCanvasDocument(projectId: string, document: CanvasDocument, recordHistory?: boolean): Promise<void>;
+  getCanvasDocument(projectId: string): Promise<CanvasDocument | null>;
+  undoCanvasDocument(projectId: string): Promise<CanvasDocument | null>;
   saveArtifactResult(projectId: string, result: ArtifactResult): Promise<void>;
   getArtifactResult(projectId: string): Promise<ArtifactResult | null>;
   saveRevisions(projectId: string, revisions: RevisionRecord[]): Promise<void>;

@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArtifactPreview } from "@/components/universal/ArtifactPreview";
 import { ArtifactIcon, WorkbenchFrame } from "@/components/universal/WorkbenchFrame";
+import { UniversalAiCanvas } from "@/components/universal/UniversalAiCanvas";
 import { WorkspaceField } from "@/components/universal/WorkspaceField";
 import { getStepLabel } from "@/core/flow-engine";
 import { useWorkspaceStore, type WorkspaceState } from "@/store/useWorkspaceStore";
@@ -344,9 +345,9 @@ function DecisionsStage({ store, onStep, onSetDecision }: { store: WorkspaceStat
 
 function ReviewStage({ store, onBuild, onStep }: { store: WorkspaceState; onBuild: () => Promise<void>; onStep: (step: FlowStepId) => void }) {
   return (
-    <div className="uc-stage-card">
+    <div className="uc-stage-card uc-review-stage">
       <StageIntro number="05" label="确认" title="核对结构化方案" description="你确认的是目标、方向、约束和成果结构；模型指令与代码仍由系统内部编译。" />
-      {store.artifactSpec ? <pre className="uc-spec-preview">{JSON.stringify(store.artifactSpec, null, 2)}</pre> : <div className="uc-review-summary"><ReviewRow label="成果类型" value={store.pack?.name ?? ""} /><ReviewRow label="原始输入" value={store.rawInput} /><ReviewRow label="已选方向" value={store.selectedDirection?.title ?? "尚未选择"} /><ReviewRow label="关键选择" value={`${Object.keys(store.decisions).length} 个模块`} /><ReviewRow label="约束" value="用户否定要求会进入 mustAvoid，不会被覆盖" /></div>}
+      {store.artifactSpec && store.projectId ? <UniversalAiCanvas projectId={store.projectId} /> : <div className="uc-review-summary"><ReviewRow label="成果类型" value={store.pack?.name ?? ""} /><ReviewRow label="原始输入" value={store.rawInput} /><ReviewRow label="已选方向" value={store.selectedDirection?.title ?? "尚未选择"} /><ReviewRow label="关键选择" value={`${Object.keys(store.decisions).length} 个模块`} /><ReviewRow label="约束" value="用户否定要求会进入 mustAvoid，不会被覆盖" /></div>}
       <div className="uc-stage-footer"><button className="uc-secondary-button" onClick={() => onStep("decisions")}><ArrowLeft size={15} />上一步：决策</button>{store.artifactSpec ? <button className="uc-primary-button" onClick={() => onStep("generate")}>下一步：生成<ArrowRight size={15} /></button> : <button className="uc-primary-button" onClick={onBuild} disabled={store.isLoading}>{store.isLoading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}生成结构化方案<ArrowRight size={15} /></button>}</div>
     </div>
   );
