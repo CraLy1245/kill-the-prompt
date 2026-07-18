@@ -22,16 +22,22 @@ test("分析模型和执行模型使用独立的服务端配置", async () => {
   assert.equal(workspace.includes("API Key（仅本地使用）"), false);
 });
 
-test("设置页支持获取 OpenAI-compatible 模型并手动或自定义选择", async () => {
+test("设置页获取 OpenAI-compatible 模型并仅允许下拉选择", async () => {
   const settings = await read("src/app/settings/page.tsx");
   assert.match(settings, /调用端点/);
   assert.match(settings, /API Key/);
   assert.match(settings, /获取模型列表/);
-  assert.match(settings, /选择或输入模型 ID/);
+  assert.match(settings, /<select value=\{textModel\}/);
+  assert.match(settings, /请从列表中选择/);
+  assert.equal(settings.includes("<datalist"), false);
+  assert.equal(settings.includes("自定义模型 ID"), false);
   assert.match(settings, /textModel/);
   const discovery = await read("src/core/model-providers/model-discovery.ts");
   assert.match(discovery, /\/models/);
   assert.match(discovery, /discoverOpenAIModels/);
+  const saveRoute = await read("src/app/api/models/status/route.ts");
+  assert.match(saveRoute, /discovered\.textModels\.includes\(body\.textModel\)/);
+  assert.match(saveRoute, /discovered\.imageModels\.includes\(body\.imageModel\)/);
 });
 
 test("writing 草稿兼容缺失平台、字符串结构和缺失语气", async () => {
@@ -46,6 +52,12 @@ test("writing 草稿兼容缺失平台、字符串结构和缺失语气", async 
   assert.equal(normalized.writing.targetLength, 1600);
   assert.equal(normalized.writing.structure[0].id, "section-1");
   assert.deepEqual(normalized.writing.structure[0].keyPoints, ["先区分阅读习惯与阅读人设"]);
+});
+
+test("结构化输出可修复缺失逗号、尾随逗号和字符串换行", async () => {
+  const { extractJsonObject } = await import("../src/lib/validators.ts");
+  const parsed = extractJsonObject('```json\n{"summary":"第一行\n第二行""directions":[{"id":"a",}],}\n```');
+  assert.deepEqual(parsed, { summary: "第一行\n第二行", directions: [{ id: "a" }] });
 });
 
 test("真实模式没有固定模板降级并启用 Patch 路径白名单", async () => {

@@ -24,6 +24,12 @@ export async function POST(request: Request) {
     const apiKey = body.apiKey || current?.apiKey || getModelConfigForRole(body.role).apiKey;
     if (!apiKey) return NextResponse.json({ error: "首次配置时必须填写 API Key。" }, { status: 400 });
     const discovered = await discoverOpenAIModels({ endpoint: body.endpoint, apiKey, role: body.role });
+    if (!discovered.textModels.includes(body.textModel)) {
+      return NextResponse.json({ error: "所选文本模型不在端点返回的模型列表中，请重新获取并从下拉框选择。" }, { status: 400 });
+    }
+    if (body.role === "execution" && body.imageModel && !discovered.imageModels.includes(body.imageModel)) {
+      return NextResponse.json({ error: "所选图片模型不在端点返回的图片模型列表中，请重新获取并从下拉框选择。" }, { status: 400 });
+    }
     await saveRoleConfig(body.role, {
       baseUrl: discovered.baseUrl,
       apiKey: body.apiKey || current?.apiKey,

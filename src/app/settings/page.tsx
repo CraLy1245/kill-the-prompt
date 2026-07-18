@@ -21,7 +21,7 @@ export default function SettingsPage() {
       <div className="uc-list-page uc-model-settings-page">
         <span className="uc-eyebrow">OPENAI-COMPATIBLE MODELS</span>
         <h1>模型设置</h1>
-        <p>填写调用端点和 API Key 后获取 OpenAI-compatible 模型列表，再为每个角色选择模型；也可以直接输入列表之外的自定义模型 ID。</p>
+        <p>填写调用端点和 API Key 后获取 OpenAI-compatible 模型列表，再从下拉框为每个角色选择模型。</p>
         {loadError ? <div className="uc-inline-error" role="alert">无法读取本机模型配置。</div> : null}
         {!status && !loadError ? <div className="uc-loading-page"><Loader2 className="animate-spin" />读取模型状态…</div> : null}
         {status ? <div className="uc-settings-grid">
@@ -61,8 +61,8 @@ function ModelRoleForm({ role, icon, title, description, status, imageStatus, on
       const data = await response.json() as DiscoveryResponse & { error?: string };
       if (!response.ok) throw new Error(data.error ?? "无法获取模型列表");
       setEndpoint(data.baseUrl); setTextModels(data.textModels); setImageModels(data.imageModels);
-      setTextModel((value) => value || data.recommendedTextModel);
-      if (role === "execution") setImageModel((value) => value || data.recommendedImageModel || "");
+      setTextModel((value) => data.textModels.includes(value) ? value : data.recommendedTextModel);
+      if (role === "execution") setImageModel((value) => data.imageModels.includes(value) ? value : data.recommendedImageModel || "");
       setMessage({ type: "success", text: `已获取 ${data.discoveredModels.length} 个模型，请确认选择后保存。` });
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "无法获取模型列表" });
@@ -102,8 +102,8 @@ function ModelRoleForm({ role, icon, title, description, status, imageStatus, on
         <label><span>调用端点</span><input type="url" value={endpoint} onChange={(event) => setEndpoint(event.target.value)} placeholder="https://api.example.com/v1" required /><small>可填写 API 根地址，也可粘贴完整的 /chat/completions 或 /responses 地址。</small></label>
         <label><span>API Key</span><div className="uc-key-input"><KeyRound size={15} /><input type={showKey ? "text" : "password"} value={apiKey} onChange={(event) => setApiKey(event.target.value)} placeholder={status.configured ? "已保存；留空表示继续使用原 Key" : "sk-..."} autoComplete="off" /><button type="button" onClick={() => setShowKey((value) => !value)} aria-label={showKey ? "隐藏 API Key" : "显示 API Key"}>{showKey ? <EyeOff size={16} /> : <Eye size={16} />}</button></div></label>
         <button className="uc-discover-button" type="button" onClick={() => void discoverModels()} disabled={discovering || !endpoint.trim() || (!status.configured && !apiKey.trim())}>{discovering ? <Loader2 size={15} className="animate-spin" /> : <ListRestart size={15} />}获取模型列表</button>
-        <label><span>文本模型</span><input type="text" list={`${role}-text-models`} value={textModel} onChange={(event) => setTextModel(event.target.value)} placeholder="选择或输入模型 ID" required /><datalist id={`${role}-text-models`}>{textModels.map((model) => <option key={model} value={model} />)}</datalist><small>{textModels.length ? `已发现 ${textModels.length} 个文本模型，可选择或自定义输入。` : "获取列表后选择，也可以直接输入兼容的模型 ID。"}</small></label>
-        {role === "execution" ? <label><span>图片模型（可选）</span><div className="uc-model-input-with-icon"><ImageIcon size={15} /><input type="text" list={`${role}-image-models`} value={imageModel} onChange={(event) => setImageModel(event.target.value)} placeholder="选择或输入图片模型 ID" /></div><datalist id={`${role}-image-models`}>{imageModels.map((model) => <option key={model} value={model} />)}</datalist><small>不需要图片生成时可以留空。</small></label> : null}
+        <label><span>文本模型</span><select value={textModel} onChange={(event) => setTextModel(event.target.value)} required disabled={!modelOptions(textModel, textModels).length}><option value="" disabled>请先获取模型列表</option>{modelOptions(textModel, textModels).map((model) => <option key={model} value={model}>{model}</option>)}</select><small>{textModels.length ? `已发现 ${textModels.length} 个文本模型，请从列表中选择。` : "获取模型列表后才能选择文本模型。"}</small></label>
+        {role === "execution" ? <label><span>图片模型（可选）</span><div className="uc-model-input-with-icon"><ImageIcon size={15} /><select value={imageModel} onChange={(event) => setImageModel(event.target.value)}><option value="">不使用图片模型</option>{modelOptions(imageModel, imageModels).map((model) => <option key={model} value={model}>{model}</option>)}</select></div><small>{imageModels.length ? `已发现 ${imageModels.length} 个图片模型；不需要图片生成时可选择“不使用图片模型”。` : "当前列表没有识别到图片模型。"}</small></label> : null}
         {message ? <div className={`uc-model-message ${message.type}`} role={message.type === "error" ? "alert" : "status"}>{message.text}</div> : null}
         <div className="uc-model-form-actions">{status.configured ? <button className="uc-text-button danger" type="button" onClick={() => void clearConfig()} disabled={saving}><Trash2 size={14} />清除配置</button> : <span />}
           <button className="uc-primary-button" type="submit" disabled={saving || discovering || !endpoint.trim() || !textModel.trim() || (!status.configured && !apiKey.trim())}>{saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}测试并保存选择</button></div>
@@ -119,4 +119,8 @@ function filterImageModels(models: string[]) {
 function filterTextModels(models: string[]) {
   const text = models.filter((model) => !/(image|dall|flux|imagen|embedding|whisper|tts|audio)/i.test(model));
   return text.length ? text : models;
+}
+
+function modelOptions(selected: string, discovered: string[]) {
+  return [...new Set([selected, ...discovered].filter(Boolean))];
 }

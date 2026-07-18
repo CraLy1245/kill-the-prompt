@@ -133,7 +133,7 @@ npm run typecheck
 npm run build
 ```
 
-启动后打开 `http://localhost:3000/settings`。填写 OpenAI-compatible 调用端点与 API Key 后，先通过 `GET /models` 获取列表，再分别选择分析文本模型、执行文本模型和可选的图片模型；模型输入框也接受列表之外的自定义模型 ID。端点既可以是 API 根地址，也可以是完整的 `/chat/completions` 或 `/responses` 地址。
+启动后打开 `http://localhost:3000/settings`。填写 OpenAI-compatible 调用端点与 API Key 后，先通过 `GET /models` 获取列表，再从下拉框分别选择分析文本模型、执行文本模型和可选的图片模型；服务端会再次校验选择确实来自当前端点。端点既可以是 API 根地址，也可以是完整的 `/chat/completions` 或 `/responses` 地址。
 
 `.env.local.example` 仍保留为部署环境或高级配置的后备方式。设置页保存的本机配置优先于环境变量，通用工作流不会在模型缺失时静默回退到演示结果。
 

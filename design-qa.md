@@ -1,42 +1,59 @@
 # Design QA
 
-## OpenAI-compatible model settings
+## OpenAI-compatible model dropdowns
 
-### Inputs
+### Evidence
 
-- Source reference: `design-qa-artifacts/settings-reference.png`
-- Desktop implementation: `C:/Users/jiazh/AppData/Local/Temp/T-002-settings-model-choice-after.png` at 1600×1024
-- Responsive implementation: `C:/Users/jiazh/AppData/Local/Temp/T-002-settings-model-choice-mobile.png` at 390×844
-- Bug evidence: `C:/Users/jiazh/AppData/Local/Temp/codex-clipboard-e2e4c3c3-1ea8-4a0f-aacd-cf27db32b75c.png`
-- Comparison state: both roles connected to a local OpenAI-compatible test server; the analysis role shows a manually selected listed model and execution shows a custom text model plus selected image model.
+- Source visual truth: `design-qa-artifacts/settings-reference.png`
+- Bug evidence: `C:/Users/jiazh/AppData/Local/Temp/codex-clipboard-b68f2d04-d3f8-4fbd-9876-fab660c7c506.png`
+- Matched desktop implementation: `C:/Users/jiazh/AppData/Local/Temp/t002-settings-dropdown-qa-2048.png`
+- Desktop interaction capture: `C:/Users/jiazh/AppData/Local/Temp/t002-settings-dropdown-desktop.png`
+- Mobile implementation: `C:/Users/jiazh/AppData/Local/Temp/t002-settings-dropdown-mobile.png`
+- Viewports: 2048×1080 visual comparison, 1600×1024 desktop interaction, 390×844 responsive check
+- State: both roles configured; text model dropdowns populated; optional image model set to “不使用图片模型”.
 
-### Visual comparison
+### Full-view comparison
 
-- Preserved the reference shell, warm paper surface, deep plum accent, serif display heading, two-card role structure, restrained borders, and green security banner.
-- Added a bordered “获取模型列表” action and editable model comboboxes while retaining the reference hierarchy, typography, card surfaces, and plum/green state language.
-- Full-view comparison and focused form-region inspection were completed in the same pass.
-- Issue found at 1600px: grid items initially honored input min-content width and visually clipped the execution card. Fixed with `minmax(0, 1fr)`, `min-width: 0`, and a one-column intermediate breakpoint.
-- This iteration introduced no new P0/P1/P2 visual mismatch. The denser cards are an intentional functional expansion and remain balanced in the existing two-column frame.
+The source and current 2048×1080 implementation were opened together in one comparison input. The implementation preserves the warm paper background, plum accent, serif display heading, two-card role structure, restrained border treatment, left navigation proportions, and green server-safety banner. The denser form controls are an intentional functional expansion of the reference summary cards.
 
-### Interaction and responsive checks
+The floating pixel pet in the source is an environment overlay rather than a settings-page asset and is therefore not treated as product-code drift. The current page uses the shared left-rail hatch control supplied by that environment.
 
-- In the in-app browser, fetched three models using a full `/chat/completions` URL and confirmed normalization to the `/v1` root.
-- Toggled API-key visibility, confirmed the key field clears after save, and confirmed the public status response contains no `apiKey` field.
-- Changed the analysis model from the existing value to listed model `execution-writer` and saved it successfully.
-- Entered list-external execution model `my-custom-model`, selected `gpt-image-1`, and confirmed both exact values persisted after save.
-- Replayed a malformed writing draft matching the reported failure: missing `platform`/`tone`, string-valued `structure`, and string `targetLength`. The real build-spec API normalized it to a valid Zhihu ArtifactSpec with object sections and passed strict validation.
-- At 1600×1024 both cards remained inside the 1120px content region. At 390×844 the sidebar became the mobile header, cards stacked, action buttons stacked, and document `scrollWidth` did not exceed `clientWidth`.
-- Application console produced no errors or warnings in the final desktop and mobile passes.
+### Focused form-region comparison
 
-## Rubric
+A separate crop was not required: at 2048×1080 the endpoint, API-key, discovery action, native select chevrons, selected values, helper copy, and save actions are legible in the full-view pair. The 1600×1024 capture was additionally inspected for control alignment and card balance.
 
-| Area | Result |
-| --- | --- |
-| Visual fidelity | Passed — reference shell, palette, type, spacing, cards, and security treatment retained |
-| Information hierarchy | Passed — role, endpoint, key, discovered model, state, and primary save action are clear |
-| Responsive behavior | Passed — two columns collapse without document overflow and mobile actions remain reachable |
-| Interaction integrity | Passed — discovery, listed selection, custom entry, image selection, test/save, and structured-draft normalization were verified |
-| Security communication | Passed — masked key, server-only persistence notice, and key-free public response verified |
-| Accessibility basics | Passed — semantic labels, status/alert roles, visible focus, and disabled states are present |
+### Findings
+
+- No actionable P0, P1, or P2 visual differences remain.
+- Typography: display/body hierarchy, weights, wrapping, and small helper text remain consistent with the reference language.
+- Spacing and layout: cards align to the shared grid; dropdowns and actions retain a stable vertical rhythm; no horizontal overflow at desktop or mobile widths.
+- Colors and tokens: plum interactive states, warm surfaces, muted helper text, green configured/safety states, and border contrast remain coherent.
+- Image quality: no new image assets are introduced by this change; existing iconography remains vector-sharp and consistent.
+- Copy: all custom-entry language was removed; helper copy now clearly says the model must be selected from the discovered list.
+- Accessibility: model controls are native `select` elements with labels, keyboard behavior, visible focus styling, disabled states, and readable selected values.
+
+### Primary interactions tested
+
+- Confirmed the analysis and execution model controls render as native `SELECT` elements, not text inputs or datalists.
+- Changed the analysis selection to `gpt-5.6-sol`, verified the exact selected value and available options, then restored `gpt-5.6-luna` without saving or changing the persisted configuration.
+- Confirmed the optional image selector exposes “不使用图片模型”.
+- Confirmed the server save route rejects text and image model IDs that are absent from the endpoint discovery result through code-level regression coverage.
+- Confirmed document `scrollWidth` equals `clientWidth` at 1600×1024 and 390×844.
+- Checked the final settings tab console: no application errors or warnings attributable to this change.
+
+### Comparison history
+
+- Earlier state: editable datalist controls allowed arbitrary model IDs; the reported workflow also failed when a model omitted a JSON comma.
+- Fixes made: replaced editable controls with native selects, reset stale choices after discovery, added server-side discovered-model allowlist validation, and added deterministic repair for missing commas, trailing commas, and raw control characters before Schema validation.
+- Post-fix evidence: desktop dropdown interaction, desktop/mobile screenshots, seven passing regression tests, successful TypeScript check, and successful 29-route production build.
+
+### Implementation checklist
+
+- [x] Dropdown-only model selection
+- [x] Optional image-model empty choice
+- [x] Server-side option validation
+- [x] Structured JSON syntax repair
+- [x] Desktop and mobile overflow checks
+- [x] Console, tests, typecheck, and build verification
 
 final result: passed
