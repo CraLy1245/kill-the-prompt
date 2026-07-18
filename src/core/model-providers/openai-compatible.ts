@@ -10,13 +10,14 @@ type StructuredCall<T> = {
   system: string;
   prompt: string;
   schema: ZodType<T>;
+  normalize?: (value: unknown) => unknown;
   temperature?: number;
 };
 
 export async function callStructuredModel<T>(params: StructuredCall<T>): Promise<T> {
   assertModelConfigured(params.config);
   const first = await requestCompletion(params.config, params.task, params.system, params.prompt, params.temperature ?? 0.15);
-  const parsed = parseStructured(params.schema, first);
+  const parsed = parseStructured(params.schema, first, params.normalize);
   if (parsed.success) return parsed.data;
 
   const repairPrompt = [
@@ -28,7 +29,7 @@ export async function callStructuredModel<T>(params: StructuredCall<T>): Promise
     first.slice(0, 16_000),
   ].join("\n\n");
   const repaired = await requestCompletion(params.config, `${params.task}:repair`, params.system, repairPrompt, 0);
-  const repairedParsed = parseStructured(params.schema, repaired);
+  const repairedParsed = parseStructured(params.schema, repaired, params.normalize);
   if (repairedParsed.success) return repairedParsed.data;
   throw new ModelOutputError(`${getRoleLabel(params.config.role)}返回格式无效：${repairedParsed.error}`);
 }
@@ -65,9 +66,10 @@ async function requestCompletion(config: ServerModelConfig, task: string, system
   }
 }
 
-function parseStructured<T>(schema: ZodType<T>, text: string): { success: true; data: T } | { success: false; error: string } {
+function parseStructured<T>(schema: ZodType<T>, text: string, normalize?: (value: unknown) => unknown): { success: true; data: T } | { success: false; error: string } {
   try {
-    const json = extractJsonObject(text);
+    const extracted = extractJsonObject(text);
+    const json = normalize ? normalize(extracted) : extracted;
     const result = schema.safeParse(json);
     if (result.success) return { success: true, data: result.data };
     return { success: false, error: result.error.issues.map((issue) => `${issue.path.join(".") || "root"}: ${issue.message}`).join("; ") };

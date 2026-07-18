@@ -10,6 +10,7 @@ import {
   artifactSpecPatchSchema,
 } from "@/core/schemas";
 import { getAnalysisModelConfig } from "@/core/model-providers/config";
+import { normalizeArtifactDraft } from "@/core/model-providers/artifact-draft-normalizer";
 import { callStructuredModel, ModelOutputError } from "@/core/model-providers/openai-compatible";
 import type { ArtifactSpec, ArtifactSpecPatch, CreationPack, CreativeDirection } from "@/types/universal";
 
@@ -58,6 +59,7 @@ export async function analyzeWithModel(params: { rawInput: string; inputValues: 
 }
 
 export async function buildSpecWithModel(params: { projectId: string; pack: CreationPack; rawInput: string; inputValues: Record<string, unknown>; analysis: Record<string, unknown>; selectedDirection?: CreativeDirection; decisions: Record<string, unknown> }): Promise<ArtifactSpec> {
+  const writingDefaults = getWritingDefaults(params.pack, params.inputValues);
   const prompt = [
     "任务：把已确认的需求、方向与决策转换成可供执行模型消费的结构化 ArtifactSpec 草稿。",
     `artifactKind 必须是 ${params.pack.artifactKind}。`,
@@ -68,10 +70,11 @@ export async function buildSpecWithModel(params: { projectId: string; pack: Crea
     "web-page: { artifactKind, constraints, webPage }",
     "product-feature: { artifactKind, constraints, feature }",
     "constraints 必须包含 mustInclude、mustAvoid、mustKeep 三个字符串数组。",
+    params.pack.artifactKind === "writing" ? `writing 必须严格包含：{ topic: string, platform: string, audience: string[], purpose: string, thesis: string, supportingClaims: string[], counterArguments: string[], structure: [{ id: string, title: string, purpose: string, keyPoints: string[] }], tone: string[], targetLength: integer, formattingRules: string[], confirmedFacts: string[], uncertainFacts: string[] }。structure 不得使用字符串数组。platform 默认使用“${writingDefaults.platform}”，tone 必须是字符串数组。` : "",
     "输入：",
     JSON.stringify(params),
   ].join("\n\n");
-  const draft = await callStructuredModel({ config: getAnalysisModelConfig(), task: "build-spec", system, prompt, schema: artifactDraftSchema });
+  const draft = await callStructuredModel({ config: getAnalysisModelConfig(), task: "build-spec", system, prompt, schema: artifactDraftSchema, normalize: (value) => normalizeArtifactDraft(value, writingDefaults) });
   if (draft.artifactKind !== params.pack.artifactKind) throw new ModelOutputError("分析模型返回的成果类型与创作包不一致");
   const now = new Date().toISOString();
   return artifactSpecSchema.parse({
@@ -87,6 +90,17 @@ export async function buildSpecWithModel(params: { projectId: string; pack: Crea
     createdAt: now,
     updatedAt: now,
   }) as ArtifactSpec;
+}
+
+function getWritingDefaults(pack: CreationPack, inputValues: Record<string, unknown>) {
+  const rawTone = inputValues.tone;
+  const tone = Array.isArray(rawTone) ? rawTone.filter((item): item is string => typeof item === "string" && Boolean(item.trim())) : typeof rawTone === "string" && rawTone.trim() ? [rawTone.trim()] : ["清晰", "克制"];
+  const requestedLength = Number(inputValues.target_length);
+  return {
+    platform: /zhihu|知乎/i.test(`${pack.id} ${pack.name}`) ? "知乎" : pack.name,
+    tone,
+    targetLength: Number.isFinite(requestedLength) && requestedLength >= 200 ? Math.round(requestedLength) : 1600,
+  };
 }
 
 export async function buildPatchWithModel(params: { instruction: string; spec: ArtifactSpec }): Promise<ArtifactSpecPatch> {

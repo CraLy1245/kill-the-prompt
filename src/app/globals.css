@@ -1100,7 +1100,7 @@ html { background: var(--uc-paper); }
 
 .uc-model-settings-page > p code { padding: 2px 5px; background: #f1ece8; color: var(--uc-plum); font-size: 12px; }
 .uc-model-settings-page .uc-settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.uc-model-form-card { display: flex; min-width: 0; min-height: 560px; flex-direction: column; }
+.uc-model-form-card { display: flex; min-width: 0; min-height: 680px; flex-direction: column; }
 .uc-model-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .uc-model-card-head > span { display: grid; width: 36px; height: 36px; place-items: center; border: 1px solid var(--uc-border); color: var(--uc-plum); }
 .uc-model-card-head > strong { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; }
@@ -1117,6 +1117,12 @@ html { background: var(--uc-paper); }
 .uc-key-input > svg { position: absolute; top: 14px; left: 12px; color: var(--uc-muted); }
 .uc-key-input input { padding-right: 42px; padding-left: 36px; }
 .uc-key-input button { position: absolute; top: 4px; right: 4px; display: grid; width: 36px; height: 36px; place-items: center; border: 0; background: transparent; color: var(--uc-muted); cursor: pointer; }
+.uc-model-input-with-icon { position: relative; }
+.uc-model-input-with-icon > svg { position: absolute; top: 14px; left: 12px; color: var(--uc-muted); }
+.uc-model-input-with-icon input { padding-left: 36px; }
+.uc-discover-button { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; gap: 7px; border: 1px solid var(--uc-plum); border-radius: 6px; background: transparent; color: var(--uc-plum); cursor: pointer; font-size: 12px; font-weight: 750; }
+.uc-discover-button:hover:not(:disabled) { background: var(--uc-plum-soft); }
+.uc-discover-button:disabled { cursor: not-allowed; opacity: .45; }
 .uc-discovered-models { display: grid; gap: 8px; border: 1px solid var(--uc-border); background: #faf7f3; padding: 12px; }
 .uc-discovered-models > span { color: var(--uc-muted); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .uc-discovered-models p { display: grid; grid-template-columns: 95px minmax(0, 1fr); gap: 8px; overflow-wrap: anywhere; }

@@ -20,7 +20,7 @@ export function getAnalysisModelConfig(): ServerModelConfig {
     role: "analysis",
     model: stored?.textModel ?? process.env.ANALYSIS_MODEL_ID ?? process.env.RIGHT_CODES_MODEL ?? "",
     baseUrl: normalizeBaseUrl(stored?.baseUrl ?? process.env.ANALYSIS_MODEL_BASE_URL ?? process.env.RIGHT_CODES_BASE_URL ?? DEFAULT_TEXT_BASE_URL),
-    apiKey: stored?.apiKey ?? process.env.ANALYSIS_MODEL_API_KEY ?? process.env.RIGHT_CODES_API_KEY ?? "",
+    apiKey: stored?.apiKey || process.env.ANALYSIS_MODEL_API_KEY || process.env.RIGHT_CODES_API_KEY || "",
     timeoutMs: positiveInteger(process.env.ANALYSIS_MODEL_TIMEOUT_MS, 90_000),
   };
 }
@@ -31,7 +31,7 @@ export function getExecutionModelConfig(): ServerModelConfig {
     role: "execution",
     model: stored?.textModel ?? process.env.EXECUTION_MODEL_ID ?? process.env.RIGHT_CODES_MODEL ?? "",
     baseUrl: normalizeBaseUrl(stored?.baseUrl ?? process.env.EXECUTION_MODEL_BASE_URL ?? process.env.RIGHT_CODES_BASE_URL ?? DEFAULT_TEXT_BASE_URL),
-    apiKey: stored?.apiKey ?? process.env.EXECUTION_MODEL_API_KEY ?? process.env.RIGHT_CODES_API_KEY ?? "",
+    apiKey: stored?.apiKey || process.env.EXECUTION_MODEL_API_KEY || process.env.RIGHT_CODES_API_KEY || "",
     timeoutMs: positiveInteger(process.env.EXECUTION_MODEL_TIMEOUT_MS, 150_000),
   };
 }
@@ -42,7 +42,7 @@ export function getExecutionImageConfig(): ServerModelConfig {
     role: "execution",
     model: stored?.imageModel ?? process.env.EXECUTION_IMAGE_MODEL_ID ?? process.env.RIGHT_CODES_IMAGE_MODEL ?? "",
     baseUrl: normalizeBaseUrl(stored?.baseUrl ?? process.env.EXECUTION_IMAGE_BASE_URL ?? process.env.RIGHT_CODES_IMAGE_BASE_URL ?? DEFAULT_IMAGE_BASE_URL),
-    apiKey: stored?.apiKey ?? process.env.EXECUTION_IMAGE_API_KEY ?? process.env.RIGHT_CODES_IMAGE_API_KEY ?? "",
+    apiKey: stored?.apiKey || process.env.EXECUTION_IMAGE_API_KEY || process.env.RIGHT_CODES_IMAGE_API_KEY || "",
     timeoutMs: positiveInteger(process.env.EXECUTION_IMAGE_TIMEOUT_MS, 180_000),
   };
 }
@@ -55,18 +55,23 @@ export function assertModelConfigured(config: ServerModelConfig, transport: "tex
 }
 
 export function getPublicUniversalModelStatus(): { analysis: PublicModelRoleStatus; execution: PublicModelRoleStatus; executionImage: PublicModelRoleStatus } {
+  const stored = readModelSettingsSync();
   const analysis = getAnalysisModelConfig();
   const execution = getExecutionModelConfig();
   const executionImage = getExecutionImageConfig();
   return {
-    analysis: toPublicStatus(analysis),
-    execution: toPublicStatus(execution),
-    executionImage: toPublicStatus(executionImage),
+    analysis: toPublicStatus(analysis, stored.analysis?.discoveredModels),
+    execution: toPublicStatus(execution, stored.execution?.discoveredModels),
+    executionImage: toPublicStatus(executionImage, stored.execution?.discoveredModels),
   };
 }
 
-function toPublicStatus(config: ServerModelConfig): PublicModelRoleStatus {
-  return { role: config.role, model: config.model, baseUrl: config.baseUrl, configured: Boolean(config.apiKey && config.model && config.baseUrl) };
+function toPublicStatus(config: ServerModelConfig, availableModels: string[] = []): PublicModelRoleStatus {
+  return { role: config.role, model: config.model, baseUrl: config.baseUrl, configured: Boolean(config.apiKey && config.model && config.baseUrl), availableModels };
+}
+
+export function getModelConfigForRole(role: ModelRole) {
+  return role === "analysis" ? getAnalysisModelConfig() : getExecutionModelConfig();
 }
 
 export class ModelConfigurationError extends Error {

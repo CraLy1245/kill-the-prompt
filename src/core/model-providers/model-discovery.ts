@@ -17,9 +17,9 @@ export async function discoverOpenAIModels(params: { endpoint: string; apiKey: s
     if (!models.length) throw new Error("端点没有返回可用模型，请确认它支持 OpenAI GET /models 接口。");
     const textModels = models.filter((id) => !/(image|dall|flux|imagen|embedding|whisper|tts|audio)/i.test(id));
     const imageModels = models.filter((id) => /(image|dall|flux|imagen)/i.test(id));
-    const textModel = chooseTextModel(textModels.length ? textModels : models, params.role);
-    const imageModel = params.role === "execution" ? chooseImageModel(imageModels) : undefined;
-    return { baseUrl, textModel, imageModel, discoveredModels: models };
+    const recommendedTextModel = chooseTextModel(textModels.length ? textModels : models, params.role);
+    const recommendedImageModel = params.role === "execution" ? chooseImageModel(imageModels) : undefined;
+    return { baseUrl, discoveredModels: models, textModels: textModels.length ? textModels : models, imageModels, recommendedTextModel, recommendedImageModel };
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") throw new Error("连接模型端点超时，请检查地址或网络。");
     throw error;

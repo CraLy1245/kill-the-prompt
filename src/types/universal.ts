@@ -291,6 +291,7 @@ export type PublicModelRoleStatus = {
   model: string;
   baseUrl: string;
   configured: boolean;
+  availableModels: string[];
 };
 
 export type ModelRunRecord = {

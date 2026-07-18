@@ -6,7 +6,7 @@ import type { ModelRole } from "@/types/universal";
 
 export type StoredRoleConfig = {
   baseUrl: string;
-  apiKey: string;
+  apiKey?: string;
   textModel: string;
   imageModel?: string;
   discoveredModels: string[];
