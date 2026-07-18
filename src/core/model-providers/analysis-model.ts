@@ -4,6 +4,7 @@ import {
   artifactSpecSchema,
   imageArtifactSpecSchema,
   productFeatureArtifactSpecSchema,
+  runtimeDecisionModuleSchema,
   webPageArtifactSpecSchema,
   workflowAnalysisResultSchema,
   writingArtifactSpecSchema,
@@ -29,6 +30,7 @@ const artifactDraftSchema = z.discriminatedUnion("artifactKind", [
   z.object({ artifactKind: z.literal("web-page"), constraints: constraintsSchema, webPage: webPageArtifactSpecSchema.shape.webPage }),
   z.object({ artifactKind: z.literal("product-feature"), constraints: constraintsSchema, feature: productFeatureArtifactSpecSchema.shape.feature }),
 ]);
+const decisionModulesResultSchema = z.object({ decisionModules: z.array(runtimeDecisionModuleSchema) });
 
 export async function analyzeWithModel(params: { rawInput: string; inputValues: Record<string, unknown>; pack: CreationPack }) {
   const directionCount = params.pack.flow.directionConfig?.count ?? 3;
@@ -37,7 +39,7 @@ export async function analyzeWithModel(params: { rawInput: string; inputValues: 
     `成果类型：${params.pack.artifactKind}`,
     `方向数量必须刚好为 ${directionCount}。`,
     `方向差异维度：${JSON.stringify(params.pack.flow.directionConfig?.differenceDimensions ?? [])}`,
-    "decisionModules 必须与创作包定义的模块 ID、controlType、required 和 optionSource 一致。preset 模块必须原样保留预设 options；ai-generated 模块根据需求生成选项。",
+    "decisionModules 必须与创作包定义的模块 ID、controlType、required 和 optionSource 一致。ai-generated 模块的每组选项必须紧扣当前用户需求，不得套用固定通用答案；数量必须等于 optionCount。preset 模块才允许原样保留预设 options。",
     "输出结构：{ analysis: { intent, goal, audience: string[], explicitRequirements: string[], constraints: string[], uncertainPoints: string[], assumptions: string[] }, directions: [{ id, title, summary, differences: string[], recommended? }], decisionModules: [...] }",
     "创作包：",
     JSON.stringify(params.pack),
@@ -48,14 +50,40 @@ export async function analyzeWithModel(params: { rawInput: string; inputValues: 
   ].join("\n\n");
   const result = await callStructuredModel({ config: getAnalysisModelConfig(), task: "analyze", system, prompt, schema: workflowAnalysisResultSchema });
   if (result.directions.length !== directionCount) throw new ModelOutputError(`分析模型必须返回 ${directionCount} 个方向，实际返回 ${result.directions.length} 个`);
-  const runtimeById = new Map(result.decisionModules.map((module) => [module.id, module]));
-  const decisionModules = params.pack.decisionModules.map((definition) => {
+  const decisionModules = mergeDecisionModules(params.pack, result.decisionModules);
+  return { ...result, decisionModules };
+}
+
+export async function generateDecisionModulesWithModel(params: { rawInput: string; inputValues: Record<string, unknown>; pack: CreationPack; analysis: Record<string, unknown>; selectedDirection?: CreativeDirection }) {
+  const dynamicDefinitions = params.pack.decisionModules.filter((module) => module.optionSource === "ai-generated").map(({ options: _options, ...module }) => module);
+  if (!dynamicDefinitions.length) return mergeDecisionModules(params.pack, []);
+  const prompt = [
+    "任务：只生成运行时决策选项，不要重新分析需求，也不要生成新的方向。",
+    "每组候选答案必须针对当前主题、已填信息、分析结果和所选方向具体设计；不同项目应得到不同答案。",
+    "选项之间必须代表实质不同的执行路径，避免只替换形容词。标签控制在 4 至 10 个汉字，description 控制在 24 至 48 个汉字并说明选择后的具体影响。",
+    "模块 ID、controlType、required 和 optionSource 必须与定义一致；每组 options 数量必须严格等于 optionCount，ID 在本组内唯一。",
+    "输出结构：{ decisionModules: [{ id, title, controlType, required, optionSource, optionCount, options: [{ id, label, description, recommended? }] }] }",
+    "需要动态生成的模块：",
+    JSON.stringify(dynamicDefinitions),
+    "当前上下文：",
+    JSON.stringify({ rawInput: params.rawInput, inputValues: params.inputValues, analysis: params.analysis, selectedDirection: params.selectedDirection }),
+  ].join("\n\n");
+  const result = await callStructuredModel({ config: getAnalysisModelConfig(), task: "decision-options", system, prompt, schema: decisionModulesResultSchema, temperature: 0.35 });
+  return mergeDecisionModules(params.pack, result.decisionModules);
+}
+
+function mergeDecisionModules(pack: CreationPack, generatedModules: z.infer<typeof runtimeDecisionModuleSchema>[]) {
+  const runtimeById = new Map(generatedModules.map((module) => [module.id, module]));
+  return pack.decisionModules.map((definition) => {
     if (definition.optionSource === "preset") return { ...definition, options: definition.options ?? [] };
     const generated = runtimeById.get(definition.id);
     if (!generated) throw new ModelOutputError(`分析模型缺少决策模块：${definition.id}`);
-    return { ...definition, options: generated.options };
+    const expected = definition.optionCount ?? 3;
+    if (generated.options.length < expected) throw new ModelOutputError(`决策模块 ${definition.title} 必须生成 ${expected} 个选项`);
+    const options = generated.options.slice(0, expected);
+    if (new Set(options.map((option) => option.id)).size !== options.length) throw new ModelOutputError(`决策模块 ${definition.title} 的选项 ID 重复`);
+    return { ...definition, options };
   });
-  return { ...result, decisionModules };
 }
 
 export async function buildSpecWithModel(params: { projectId: string; pack: CreationPack; rawInput: string; inputValues: Record<string, unknown>; analysis: Record<string, unknown>; selectedDirection?: CreativeDirection; decisions: Record<string, unknown> }): Promise<ArtifactSpec> {

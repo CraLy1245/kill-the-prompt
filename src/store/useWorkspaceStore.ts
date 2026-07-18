@@ -31,6 +31,7 @@ export type WorkspaceState = {
   setRawInput: (value: string) => void;
   setInputValue: (fieldId: string, value: unknown) => void;
   setAnalysis: (analysis: Record<string, unknown>, directions: CreativeDirection[], decisionModules: RuntimeDecisionModule[]) => void;
+  replaceDecisionModules: (decisionModules: RuntimeDecisionModule[]) => void;
   selectDirection: (direction: CreativeDirection) => void;
   setDecision: (moduleId: string, value: unknown) => void;
   setStep: (step: FlowStepId) => void;
@@ -53,9 +54,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
     const requestedStep = stepOrder.includes(project.currentStep) ? project.currentStep : "input";
     const hasAnalysis = Boolean(spec || project.analysis || project.directions?.length);
     const currentStep = requestedStep !== "input" && !hasAnalysis && !result ? "input" : requestedStep;
-    const presetDecisionModules = pack.decisionModules
-      .filter((module) => module.optionSource === "preset" && module.options)
-      .map((module) => ({ ...module, options: module.options ?? [] }));
+    const derivedReady = project.resultStatus !== "draft";
     set({
       ...emptyState,
       projectId: project.id,
@@ -68,19 +67,20 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
       currentStep,
       rawInput: project.rawInput,
       inputValues: project.inputValues ?? {},
-      analysis: spec?.analysis ?? project.analysis ?? {},
+      analysis: project.analysis ?? spec?.analysis ?? {},
       directions: project.directions ?? [],
-      selectedDirection: spec?.selectedDirection ?? project.selectedDirection ?? null,
-      decisionModules: project.decisionModules ?? presetDecisionModules,
-      decisions: spec?.decisions ?? project.decisions ?? {},
-      artifactSpec: spec,
-      artifactResult: result,
+      selectedDirection: project.selectedDirection ?? (derivedReady ? spec?.selectedDirection : null) ?? null,
+      decisionModules: project.decisionModules ?? [],
+      decisions: project.decisions ?? (derivedReady ? spec?.decisions : {}) ?? {},
+      artifactSpec: derivedReady ? spec : null,
+      artifactResult: project.resultStatus === "generated" ? result : null,
       revisionHistory: revisions,
     });
   },
   setRawInput: (rawInput) => set({ rawInput, error: null }),
   setInputValue: (fieldId, value) => set((state) => ({ inputValues: { ...state.inputValues, [fieldId]: value }, error: null })),
   setAnalysis: (analysis, directions, decisionModules) => set({ analysis, directions, decisionModules, selectedDirection: null, decisions: {}, currentStep: "directions", artifactSpec: null, artifactResult: null, error: null }),
+  replaceDecisionModules: (decisionModules) => set({ decisionModules, decisions: {}, currentStep: "decisions", artifactSpec: null, artifactResult: null, error: null }),
   selectDirection: (selectedDirection) => set({ selectedDirection, artifactSpec: null, artifactResult: null, error: null }),
   setDecision: (moduleId, value) => set((state) => ({ decisions: { ...state.decisions, [moduleId]: value }, artifactSpec: null, artifactResult: null, error: null })),
   setStep: (currentStep) => set({ currentStep, error: null }),

@@ -19,5 +19,10 @@ test("内置创作包是合法 JSON 且不包含可执行配置入口", async ()
     assert.ok(pack.flow.steps.some((step) => step.id === "input" && step.enabled));
     assert.ok(pack.flow.steps.some((step) => step.id === "review" && step.enabled));
     assert.ok(pack.flow.steps.some((step) => step.id === "generate" && step.enabled));
+    for (const module of pack.decisionModules) {
+      assert.equal(module.optionSource, "ai-generated", `${pack.id}/${module.id} 不应使用固定选项`);
+      assert.ok(module.optionCount >= 2 && module.optionCount <= 8);
+      assert.equal(Object.hasOwn(module, "options"), false, `${pack.id}/${module.id} 不应携带预设答案`);
+    }
   }
 });

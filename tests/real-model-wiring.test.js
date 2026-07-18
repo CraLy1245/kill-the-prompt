@@ -68,3 +68,16 @@ test("真实模式没有固定模板降级并启用 Patch 路径白名单", asyn
   assert.match(patch, /assertAllowedPatchPaths/);
   assert.match(patch, /Patch 路径不在允许范围内/);
 });
+
+test("内置决策选项由分析模型动态生成并允许在决策页刷新", async () => {
+  const analysisModel = await read("src/core/model-providers/analysis-model.ts");
+  assert.match(analysisModel, /generateDecisionModulesWithModel/);
+  assert.match(analysisModel, /selectedDirection/);
+  assert.match(analysisModel, /不同项目应得到不同答案/);
+  const route = await read("src/app/api/workflow/decision-options/route.ts");
+  assert.match(route, /task: "decision-options"/);
+  assert.match(route, /decisions: \{\}/);
+  const workspace = await read("src/components/universal/WorkspaceClient.tsx");
+  assert.match(workspace, /重新生成选项/);
+  assert.match(workspace, /replaceDecisionModules/);
+});

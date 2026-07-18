@@ -22,13 +22,9 @@
     { "id": "decisions", "enabled": true }, { "id": "review", "enabled": true }, { "id": "generate", "enabled": true }, { "id": "refine", "enabled": true }
   ], "directionConfig": { "count": 3, "allowSkip": false, "differenceDimensions": ["MVP 边界", "用户路径", "交付风险"], "minimumDifferenceCount": 2 } },
   "decisionModules": [
-    { "id": "mvp_boundary", "title": "MVP 边界", "controlType": "single-select", "required": true, "optionSource": "preset", "options": [
-      { "id": "lean", "label": "最小闭环", "description": "只保留验证核心价值的路径。" }, { "id": "balanced", "label": "可上线版本", "description": "兼顾首次上线所需的基础体验。" }, { "id": "complete", "label": "完整规划", "description": "为后续扩展保留清晰边界。" }
-    ] },
+    { "id": "mvp_boundary", "title": "MVP 边界", "controlType": "single-select", "required": true, "optionSource": "ai-generated", "optionCount": 3 },
     { "id": "flow_style", "title": "用户流程", "controlType": "single-select", "required": true, "optionSource": "ai-generated", "optionCount": 3 },
-    { "id": "acceptance_level", "title": "验收颗粒度", "controlType": "multi-select", "required": true, "optionSource": "preset", "options": [
-      { "id": "happy", "label": "主流程", "description": "覆盖从进入到完成的成功路径。" }, { "id": "empty", "label": "空状态", "description": "明确首次使用时的引导。" }, { "id": "error", "label": "异常状态", "description": "定义失败、重试与恢复。" }
-    ] }
+    { "id": "acceptance_level", "title": "验收颗粒度", "controlType": "multi-select", "required": true, "optionSource": "ai-generated", "optionCount": 3 }
   ],
   "outputConfig": { "formats": ["md", "json"], "preview": "structured", "allowRefine": true },
   "compilerConfig": { "compilerId": "product-feature", "rendererId": "product-feature", "exporterIds": ["markdown", "json"] },

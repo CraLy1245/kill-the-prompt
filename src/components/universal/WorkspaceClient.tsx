@@ -78,7 +78,7 @@ export function WorkspaceClient({ projectId }: { projectId: string }) {
     void fetch(`/api/projects/${projectId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ selectedDirection: direction }),
+      body: JSON.stringify({ selectedDirection: direction, resultStatus: "draft" }),
     });
   }
 
@@ -88,7 +88,7 @@ export function WorkspaceClient({ projectId }: { projectId: string }) {
     void fetch(`/api/projects/${projectId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ decisions }),
+      body: JSON.stringify({ decisions, resultStatus: "draft" }),
     });
   }
 
@@ -116,10 +116,30 @@ export function WorkspaceClient({ projectId }: { projectId: string }) {
           decisionModules: data.decisionModules,
           selectedDirection: null,
           decisions: {},
+          resultStatus: "draft",
         }),
       });
     } catch (error) {
       store.setError(error instanceof Error ? error.message : "分析失败");
+    } finally {
+      store.setLoading(false);
+    }
+  }
+
+  async function regenerateDecisionOptions() {
+    store.setLoading(true);
+    store.setError(null);
+    try {
+      const response = await fetch("/api/workflow/decision-options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      store.replaceDecisionModules(data.decisionModules);
+    } catch (error) {
+      store.setError(error instanceof Error ? error.message : "决策选项生成失败");
     } finally {
       store.setLoading(false);
     }
@@ -205,6 +225,7 @@ export function WorkspaceClient({ projectId }: { projectId: string }) {
               onStep={moveTo}
               onSelectDirection={selectDirection}
               onSetDecision={setDecision}
+              onRegenerateDecisionOptions={regenerateDecisionOptions}
             />
           </section>
           <SummaryPanel store={store} onGenerate={generate} onStep={moveTo} />
@@ -254,6 +275,7 @@ function StageContent({
   onStep,
   onSelectDirection,
   onSetDecision,
+  onRegenerateDecisionOptions,
 }: {
   store: WorkspaceState;
   stage: FlowStepId;
@@ -263,11 +285,12 @@ function StageContent({
   onStep: (step: FlowStepId) => void;
   onSelectDirection: (direction: WorkspaceState["directions"][number]) => void;
   onSetDecision: (moduleId: string, value: unknown) => void;
+  onRegenerateDecisionOptions: () => Promise<void>;
 }) {
   if (stage === "input") return <InputStage store={store} onAnalyze={analyze} />;
   if (stage === "analysis") return <AnalysisStage store={store} onStep={onStep} />;
   if (stage === "directions") return <DirectionsStage store={store} onStep={onStep} onSelect={onSelectDirection} />;
-  if (stage === "decisions") return <DecisionsStage store={store} onStep={onStep} onSetDecision={onSetDecision} />;
+  if (stage === "decisions") return <DecisionsStage store={store} onStep={onStep} onSetDecision={onSetDecision} onRegenerate={onRegenerateDecisionOptions} />;
   if (stage === "review") return <ReviewStage store={store} onBuild={buildSpec} onStep={onStep} />;
   if (stage === "generate") return <GenerateStage store={store} onGenerate={generate} onStep={onStep} />;
   return <RefineStage store={store} onStep={onStep} />;
@@ -317,11 +340,12 @@ function DirectionsStage({ store, onStep, onSelect }: { store: WorkspaceState; o
   );
 }
 
-function DecisionsStage({ store, onStep, onSetDecision }: { store: WorkspaceState; onStep: (step: FlowStepId) => void; onSetDecision: (moduleId: string, value: unknown) => void }) {
+function DecisionsStage({ store, onStep, onSetDecision, onRegenerate }: { store: WorkspaceState; onStep: (step: FlowStepId) => void; onSetDecision: (moduleId: string, value: unknown) => void; onRegenerate: () => Promise<void> }) {
   const complete = Object.keys(store.decisions).length;
   return (
     <div className="uc-stage-card">
       <StageIntro number="04" label="决策" title="完成几个高杠杆选择" description="每个选择都会进入结构化方案，但不会变成一段需要你维护的 Prompt。" />
+      <div className="uc-decision-dynamic-bar"><span><Sparkles size={14} /><span><strong>选项由 AI 按当前项目生成</strong><small>不满意可以重新生成，已有选择会被清空</small></span></span><button type="button" className="uc-secondary-button" onClick={onRegenerate} disabled={store.isLoading}>{store.isLoading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}重新生成选项</button></div>
       <div className="uc-decision-list">
         {store.decisionModules.map((module) => (
           <div className="uc-decision-module" key={module.id}>

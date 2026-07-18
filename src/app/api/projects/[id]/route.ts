@@ -15,6 +15,7 @@ const projectPatchSchema = z.object({
   decisionModules: z.array(runtimeDecisionModuleSchema).optional(),
   decisions: z.record(z.string(), z.unknown()).optional(),
   currentStep: z.enum(["input", "analysis", "directions", "decisions", "review", "generate", "refine"]).optional(),
+  resultStatus: z.enum(["draft", "ready", "generated"]).optional(),
 }).strict();
 
 export async function GET(_: Request, { params }: Params) {
