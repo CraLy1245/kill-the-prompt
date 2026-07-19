@@ -8,7 +8,7 @@
 
 > 「让提示词去死」不是一个提示词收藏工具，也不只是一个生图工具。它通过可自定义的创作包，把模糊需求转换为结构化方案，再生成图片、文章、网页或产品功能文档。用户负责表达目标和做关键选择，系统负责处理复杂的模型指令与执行细节。
 
-「让提示词去死」基于 [CraLy1245/ai-logo-decision-funnel](https://github.com/CraLy1245/ai-logo-decision-funnel) 增量改造而来。原有 Logo 决策漏斗和图片生成接口保留为兼容路径，Logo 现在也有对应的 `image.logo` 内置创作包。
+「让提示词去死」从 AI Logo Decision Funnel 增量演进而来。原有 Logo 决策漏斗和图片生成接口保留为兼容路径，Logo 现在也有对应的 `image.logo` 内置创作包。
 
 副标题：**说出想法，做出选择，剩下的交给 AI**
 
@@ -19,8 +19,8 @@
 环境要求：Node.js 20.9 或更高版本、npm 10 或更高版本。
 
 ```powershell
-git clone https://github.com/CraLy1245/ai-logo-decision-funnel.git
-Set-Location ai-logo-decision-funnel
+git clone https://github.com/CraLy1245/kill-the-prompt.git
+Set-Location kill-the-prompt
 npm install
 npm run dev
 ```

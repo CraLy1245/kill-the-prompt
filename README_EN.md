@@ -10,7 +10,7 @@ English | [中文](README.md)
 
 Kill the Prompt is an open-source universal AI creation workbench. It converts vague requests into structured alternatives and a validated `ArtifactSpec`, then compiles the result into an image, Markdown document, safe web preview, or product requirements document.
 
-It extends the original [AI Logo Decision Funnel](https://github.com/CraLy1245/ai-logo-decision-funnel). The legacy logo workflow remains available, while logo creation is also included as the built-in `image.logo` creation pack.
+The project evolved from the original AI Logo Decision Funnel. The legacy logo workflow remains available, while logo creation is also included as the built-in `image.logo` creation pack.
 
 ![Universal creation workbench](design-qa-artifacts/home-desktop.png)
 
@@ -19,8 +19,8 @@ It extends the original [AI Logo Decision Funnel](https://github.com/CraLy1245/a
 Requirements: Node.js 20.9 or newer and npm 10 or newer.
 
 ```bash
-git clone https://github.com/CraLy1245/ai-logo-decision-funnel.git
-cd ai-logo-decision-funnel
+git clone https://github.com/CraLy1245/kill-the-prompt.git
+cd kill-the-prompt
 npm install
 npm run dev
 ```

@@ -1,7 +1,7 @@
 {
-  "name": "ai-logo-decision-funnel",
+  "name": "kill-the-prompt",
   "version": "1.1.0",
-  "description": "AI logo decision funnel that turns vague requirements into filtered design directions, details, prompts, and image generation handoff",
+  "description": "Universal AI creation workbench that turns vague ideas into structured, editable artifacts",
   "private": false,
   "scripts": {
     "dev": "next dev",
@@ -12,7 +12,7 @@
     "test": "node --test"
   },
   "keywords": [
-    "ai-logo-decision-funnel",
+    "kill-the-prompt",
     "logo-design",
     "decision-funnel",
     "nextjs",
