@@ -1,10 +1,37 @@
 # 让提示词去死
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6)](https://www.typescriptlang.org/)
+
+中文 | [English](README_EN.md)
+
 > 「让提示词去死」不是一个提示词收藏工具，也不只是一个生图工具。它通过可自定义的创作包，把模糊需求转换为结构化方案，再生成图片、文章、网页或产品功能文档。用户负责表达目标和做关键选择，系统负责处理复杂的模型指令与执行细节。
 
 「让提示词去死」基于 [CraLy1245/ai-logo-decision-funnel](https://github.com/CraLy1245/ai-logo-decision-funnel) 增量改造而来。原有 Logo 决策漏斗和图片生成接口保留为兼容路径，Logo 现在也有对应的 `image.logo` 内置创作包。
 
 副标题：**说出想法，做出选择，剩下的交给 AI**
+
+![通用创作工作台首页](design-qa-artifacts/home-desktop.png)
+
+## 快速开始
+
+环境要求：Node.js 20.9 或更高版本、npm 10 或更高版本。
+
+```powershell
+git clone https://github.com/CraLy1245/ai-logo-decision-funnel.git
+Set-Location ai-logo-decision-funnel
+npm install
+npm run dev
+```
+
+打开 `http://localhost:3000`。进入 `http://localhost:3000/settings`，填写 OpenAI-compatible 端点和 API Key，获取模型列表后分别选择分析模型、执行模型和可选图片模型。真实密钥只保存在本机且不会提交到 Git。
+
+也可以复制 `.env.local.example` 使用环境变量配置：
+
+```powershell
+Copy-Item .env.local.example .env.local
+```
 
 ## 核心流程
 
@@ -137,16 +164,15 @@ Prompt、系统指令、网页代码约束和文档结构都是内部编译结�
 - 编译器只生成菜单开关等有限交互，脚本独立导出为 `javascript`，预览和导出使用同一份结果。
 - CSS 使用 `uc-` 前缀隔离页面样式。
 
-## 开发与测试
+## 开发与验证
 
 ```powershell
-npm install
-npm run dev
+npm test
 npm run typecheck
 npm run build
 ```
 
-启动后打开 `http://localhost:3000/settings`。填写 OpenAI-compatible 调用端点与 API Key 后，先通过 `GET /models` 获取列表，再从下拉框分别选择分析文本模型、执行文本模型和可选的图片模型；服务端会再次校验选择确实来自当前端点。端点既可以是 API 根地址，也可以是完整的 `/chat/completions` 或 `/responses` 地址。
+设置页先通过 `GET /models` 获取列表，再从下拉框分别选择分析文本模型、执行文本模型和可选的图片模型；服务端会再次校验选择确实来自当前端点。端点既可以是 API 根地址，也可以是完整的 `/chat/completions` 或 `/responses` 地址。
 
 `.env.local.example` 仍保留为部署环境或高级配置的后备方式。设置页保存的本机配置优先于环境变量，通用工作流不会在模型缺失时静默回退到演示结果。
 

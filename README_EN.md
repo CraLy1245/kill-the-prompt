@@ -1,160 +1,134 @@
-# AI Logo Decision Funnel
+# Kill the Prompt
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6)](https://www.typescriptlang.org/)
 
 English | [中文](README.md)
 
-AI Logo Decision Funnel is an open-source AI logo design funnel. Instead of sending a vague requirement directly into an image model, it breaks the user's intent into a sequence of comparable, selectable, and reversible decisions: understand the requirement, generate directions, filter details, build a final logo plan, produce positive and negative prompts, and optionally hand the prompt off to an image-generation API.
+> Turn a rough idea into a structured plan, make the decisions that matter, and let AI handle the execution details.
 
-The current implementation focuses on logo design, but the more important part is the method. This repository is meant to show how a fuzzy user goal can be turned into a structured task that an AI model can execute more reliably. I hope other builders reuse this funnel logic in other practical AI scenarios, such as ecommerce image generation, ad creative production, short-video scripts, brand strategy, interior design concepts, marketing copy, education tools, or enterprise knowledge workflows.
+Kill the Prompt is an open-source universal AI creation workbench. It converts vague requests into structured alternatives and a validated `ArtifactSpec`, then compiles the result into an image, Markdown document, safe web preview, or product requirements document.
 
-## Core Logic
+It extends the original [AI Logo Decision Funnel](https://github.com/CraLy1245/ai-logo-decision-funnel). The legacy logo workflow remains available, while logo creation is also included as the built-in `image.logo` creation pack.
 
-Many AI products fail not because the model cannot answer, but because the system asks the model to produce the final artifact too early. The user starts with an unclear goal, and the product jumps straight to generation. This project takes a different route: expand first, filter next, then generate from structured constraints.
+![Universal creation workbench](design-qa-artifacts/home-desktop.png)
 
-1. **Requirement Understanding**
-   The user enters a natural-language logo request. The system extracts brand type, target users, brand mood, preferred elements, preferred colors, typography preference, application scenarios, constraints, and uncertain points.
+## Quick Start
 
-2. **Direction Expansion**
-   The system generates 5 distinct design directions. The user chooses the strategic direction before adjusting details.
-
-3. **Detail Filtering**
-   After a direction is selected, the system generates modular decisions such as graphic subject, structure, complexity, line weight, typography, text hierarchy, color palette, application priority, and avoidance rules.
-
-4. **Plan Confirmation**
-   The system rebuilds the selected choices into a logo plan, positive prompt, and negative prompt. The final prompt stays aligned with the user's selected constraints.
-
-5. **Generation Handoff**
-   The final prompt can be copied into another image model or sent to the configured image-generation endpoint.
-
-The reusable principle is not logo design itself. It is the funnel: expand possible directions, let the user make high-leverage choices, then generate from a structured contract.
-
-## What It Does
-
-- Parses vague logo requirements into structured brand understanding
-- Generates 5 comparable design directions
-- Lets users filter logo details through modular choices
-- Builds a final logo plan, positive prompt, and negative prompt
-- Supports Responses-compatible text/model providers
-- Supports an image-generation endpoint
-- Persists flow state locally with Zustand
-
-## Tech Stack
-
-- Next.js
-- React
-- TypeScript
-- Tailwind CSS
-- Zustand
-- Zod
-- lucide-react
-
-## Installation
-
-Clone the repository:
+Requirements: Node.js 20.9 or newer and npm 10 or newer.
 
 ```bash
 git clone https://github.com/CraLy1245/ai-logo-decision-funnel.git
 cd ai-logo-decision-funnel
-```
-
-Install dependencies:
-
-```bash
 npm install
+npm run dev
 ```
 
-Create a local environment file:
+Open `http://localhost:3000`. Then visit `http://localhost:3000/settings`, enter an OpenAI-compatible endpoint and API key, discover the available models, and select the analysis, execution, and optional image models.
 
-```bash
-cp .env.local.example .env.local
-```
-
-On Windows PowerShell:
+The settings page stores credentials only in the ignored local data directory. Environment variables remain available for deployment and advanced local setups:
 
 ```powershell
 Copy-Item .env.local.example .env.local
 ```
 
-Fill in your own API settings:
-
-```bash
-RIGHT_CODES_API_KEY=your_api_key_here
-RIGHT_CODES_BASE_URL=https://www.right.codes/codex/v1/responses
-RIGHT_CODES_MODEL=gpt-5.5
-RIGHT_CODES_IMAGE_API_KEY=your_image_api_key_here
-RIGHT_CODES_IMAGE_BASE_URL=https://www.right.codes/draw/v1/images/generations
-RIGHT_CODES_IMAGE_MODEL=gpt-image-2-vip
-```
-
-Run the development server:
-
-```bash
-npm run dev
-```
-
-Open `http://localhost:3000` in your browser.
-
-## How To Use
-
-1. Open the home page and enter a rough logo requirement.
-2. Review the structured requirement analysis.
-3. Compare the generated directions and choose one.
-4. Adjust the detail modules.
-5. Generate the final plan and prompt.
-6. Copy the prompt into your own image model, or configure the image API variables and generate directly from the result page.
-
-## Environment Variables
-
-This project does not include real API keys. Keep real keys only in `.env.local`, which is ignored by Git.
-
-| Variable | Description |
-| --- | --- |
-| `RIGHT_CODES_API_KEY` | API key for the text/model provider |
-| `RIGHT_CODES_BASE_URL` | Responses-compatible text/model endpoint |
-| `RIGHT_CODES_MODEL` | Model used for requirement analysis, direction generation, detail generation, and prompt generation |
-| `RIGHT_CODES_IMAGE_API_KEY` | Optional image API key when the image endpoint uses a separate key |
-| `RIGHT_CODES_IMAGE_BASE_URL` | Image-generation API endpoint |
-| `RIGHT_CODES_IMAGE_MODEL` | Image model used by the result page |
-
-## Scripts
-
-```bash
-npm run dev
-npm run build
-npm run start
-npm run typecheck
-```
-
-## Project Structure
+## Creation Flow
 
 ```text
-src/app           Next.js routes and API endpoints
-src/components    Reusable UI components and flow workspaces
-src/lib           AI client, prompt contracts, schemas, validators
-src/store         Client-side flow state
-src/types         Shared TypeScript types
-public/brand      Brand assets used by the app shell
+Rough request
+  -> intent analysis
+  -> multiple directions
+  -> high-leverage user decisions
+  -> validated ArtifactSpec
+  -> AI-generated HTML plan with safe preview
+  -> artifact compiler
+  -> image / Markdown / HTML / PRD
+  -> validated patches for further edits
 ```
 
-## Adapting The Funnel To Other AI Products
+Prompts, model instructions, document structures, and web constraints are internal compilation details. Users work with goals, choices, and previews rather than raw prompt templates or generated source code.
 
-To reuse this project outside logo design, keep the funnel shape and replace the domain schema:
+## Supported Artifacts
 
-- Replace requirement analysis fields with the core variables of your domain.
-- Replace the 5 logo directions with 5 strategic solution directions.
-- Replace detail modules with the decisions users must make before generation.
-- Keep strict JSON contracts between model calls and UI state.
-- Generate final prompts only after the user has selected enough structured constraints.
+| Kind | Initial output | Compiler |
+| --- | --- | --- |
+| `image` | Image instructions and generated assets | `ImageArtifactCompiler` |
+| `writing` | Markdown content | `WritingArtifactCompiler` |
+| `web-page` | `WebPageSpec`, HTML, CSS, and limited JavaScript | `WebPageArtifactCompiler` |
+| `product-feature` | PRD Markdown and structured feature JSON | `ProductFeatureArtifactCompiler` |
 
-For example, an ecommerce image workflow could use product analysis, 5 image strategy directions, scene/angle/lighting/props/selling-point modules, and then a final image prompt plus negative prompt.
+Built-in creation packs:
 
-The key is to let users make meaningful decisions before the model creates the final artifact.
+- `image.general`: general image creation
+- `image.logo`: logo design
+- `writing.zhihu-answer`: structured long-form answers
+- `web.saas-landing-page`: SaaS landing pages
+- `feature.app-feature`: app feature design
 
-## Development Notes
+Creation packs are declarative JSON. They cannot load JavaScript, shell commands, React components, dynamic imports, or arbitrary Node.js modules.
 
-- Do not commit `.env.local`, real API keys, generated logs, build folders, or private project data.
-- Prompt contracts live in `src/lib/promptContracts.ts`.
-- Shared schemas and validators live in `src/lib/logoSchemas.ts` and `src/lib/validators.ts`.
+## Architecture
+
+- `src/core/types` and `src/types`: shared artifact, pack, canvas, result, and patch contracts
+- `src/core/schemas.ts`: independent Zod schemas for packs and all artifact types
+- `src/core/flow-engine.ts`: dynamic steps, ordering, rollback, and decision applicability
+- `src/core/pack-registry`: built-in and custom pack registration
+- `src/core/model-providers`: OpenAI-compatible analysis and execution providers
+- `src/core/compilers`: artifact-specific compilers
+- `src/core/storage`: storage abstraction and file-backed local persistence
+- `src/components/universal`: the workbench, dynamic fields, artifact previews, and safe iframe UI
+
+## Local Data
+
+Runtime data is stored transparently under `.local-data/`:
+
+```text
+.local-data/
+|-- custom-packs/
+|-- projects/
+|   `-- project-id/
+|       |-- project.json
+|       |-- spec.json
+|       |-- revisions.json
+|       |-- assets/
+|       `-- outputs/result.json
+`-- cache/
+```
+
+The directory is ignored by Git. Back it up separately if you need to preserve local projects.
+
+## Security Boundaries
+
+- Model-generated plan pages pass server-side allowlist validation before rendering.
+- Plan previews reject scripts, event handlers, external resources, nested pages, network requests, and dynamic code execution.
+- Web artifact previews run in a sandboxed iframe with a strict CSP and no same-origin access.
+- Custom packs are data-only JSON and can only reference registered fields, steps, compilers, renderers, and exporters.
+- API keys are never returned by public status endpoints and local settings are ignored by Git.
+
+Production deployments should use a controlled server-side secret store instead of the local settings file.
+
+## Development
+
+```bash
+npm test
+npm run typecheck
+npm run build
+```
+
+The model layer uses two business roles:
+
+- `analysis`: requirement analysis, directions, decisions, `ArtifactSpec` construction, and patch parsing
+- `execution`: generation of writing, web pages, product documents, and images from a confirmed spec
+
+The universal workflow does not silently fall back to demo output when a required model is missing.
+
+## Current Limitations
+
+- Custom creation packs can be imported and exported through validated JSON APIs, but the visual editor is still in progress.
+- Project archive export and complete historical rollback remain future work.
+- Additional staging contract tests and fixed regression fixtures are recommended before production deployment.
 
 ## License
 
-MIT
+[MIT](LICENSE)
